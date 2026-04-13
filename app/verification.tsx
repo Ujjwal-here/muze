@@ -98,7 +98,7 @@ export default function VerificationScreen() {
   const handleContinue = () => {
     const fullCode = code.join("");
     if (fullCode.length === CODE_LENGTH) {
-      router.push("/");
+      router.push("/onboarding");
     }
   };
 
