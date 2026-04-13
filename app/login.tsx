@@ -62,7 +62,10 @@ export default function LoginScreen() {
 
   const handleContinue = () => {
     if (email.trim()) {
-      router.push("/");
+      router.push({
+        pathname: "/verification",
+        params: { email: email.trim() },
+      });
     }
   };
 
