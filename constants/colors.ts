@@ -1,0 +1,17 @@
+export const Colors = {
+  primary: "#F87B1B",
+  primaryPressed: "#D96A10",
+  white: "#FFFFFF",
+  black: "#111111",
+  background: "#FFFFFF",
+  inputBg: "#FAFAFA",
+  inputBgFocused: "#FFFFFF",
+  border: "#E4E4E4",
+  placeholder: "#ADADAD",
+  muted: "#8A8A8A",
+  divider: "#D8D8D8",
+  label: "#333333",
+  subtitle: "#555555",
+  shadow: "#000000",
+  googleBtnPressed: "#F5F5F5",
+} as const;
