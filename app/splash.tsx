@@ -1,13 +1,11 @@
 import { Layout } from "@/constants/layout";
+import { Colors } from "@/constants/colors";
 import { iw } from "@/shared/utils/responsive";
 import React, { useEffect, useRef } from "react";
 import { Image, Animated, StyleSheet, StatusBar } from "react-native";
+import { router } from "expo-router";
 
-interface SplashScreenProps {
-  onAnimationComplete?: () => void;
-}
-
-const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete }) => {
+const SplashScreen: React.FC = () => {
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoTranslateY = useRef(
@@ -123,7 +121,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete }) => {
 
     const exitTimer = setTimeout(() => {
       pulseLoop.stop();
-      exitAnim.start(() => onAnimationComplete?.());
+      exitAnim.start(() => {
+        router.replace("/login");
+      });
     }, 2800);
 
     return () => clearTimeout(exitTimer);
@@ -165,12 +165,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onAnimationComplete }) => {
   );
 };
 
-const RING_SIZE = Layout.horizontal["10xl"]; // wp(28) ≈ 160px on 360 base
+const RING_SIZE = Layout.horizontal["10xl"];
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -179,16 +179,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: Layout.horizontal["9xl"], // wp(26)
-    height: Layout.horizontal["9xl"], // keep square
+    width: iw(70),
+    height: iw(70),
   },
   ring: {
     position: "absolute",
     width: RING_SIZE,
     height: RING_SIZE,
     borderRadius: RING_SIZE / 2,
-    borderWidth: iw(0.55),
-    borderColor: "#000000",
+    borderWidth: 1,
+    borderColor: Colors.black,
     backgroundColor: "transparent",
   },
 });
