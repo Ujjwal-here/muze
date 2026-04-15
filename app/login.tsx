@@ -9,6 +9,8 @@ import {
   Platform,
   Pressable,
   Image,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -16,18 +18,18 @@ import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 import { Typography } from "@/constants/typography";
 import { Colors } from "@/constants/colors";
+import { supabase } from "@/shared/lib/supabase";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [emailFocused, setEmailFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
   const emailRef = useRef<TextInput>(null);
 
   const logoAnim = useRef(new Animated.Value(0)).current;
   const titleAnim = useRef(new Animated.Value(0)).current;
   const subtitleAnim = useRef(new Animated.Value(0)).current;
   const formAnim = useRef(new Animated.Value(0)).current;
-  const orAnim = useRef(new Animated.Value(0)).current;
-  const googleAnim = useRef(new Animated.Value(0)).current;
 
   const fadeSlide = (anim: Animated.Value, delay: number) =>
     Animated.timing(anim, {
@@ -43,8 +45,6 @@ export default function LoginScreen() {
       fadeSlide(titleAnim, 0),
       fadeSlide(subtitleAnim, 0),
       fadeSlide(formAnim, 0),
-      fadeSlide(orAnim, 0),
-      fadeSlide(googleAnim, 0),
     ]).start();
   }, []);
 
@@ -60,13 +60,26 @@ export default function LoginScreen() {
     ],
   });
 
-  const handleContinue = () => {
-    if (email.trim()) {
-      router.push({
-        pathname: "/verification",
-        params: { email: email.trim() },
-      });
+  const handleContinue = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: trimmed,
+      options: { shouldCreateUser: true },
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
     }
+
+    router.push({
+      pathname: "/verification",
+      params: { email: trimmed },
+    });
   };
 
   return (
@@ -111,6 +124,7 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               onFocus={() => setEmailFocused(true)}
               onBlur={() => setEmailFocused(false)}
+              onSubmitEditing={handleContinue}
             />
           </Pressable>
         </Animated.View>
@@ -120,34 +134,16 @@ export default function LoginScreen() {
             style={({ pressed }) => [
               styles.continueBtn,
               pressed && { backgroundColor: Colors.primaryPressed },
+              (loading || !email.trim()) && styles.continueBtnDisabled,
             ]}
             onPress={handleContinue}
+            disabled={loading || !email.trim()}
           >
-            <Text style={styles.continueTxt}>Continue</Text>
-          </Pressable>
-        </Animated.View>
-
-        <Animated.View style={[styles.orRow, animStyle(orAnim)]}>
-          <View style={styles.orLine} />
-          <Text style={styles.orTxt}>OR</Text>
-          <View style={styles.orLine} />
-        </Animated.View>
-
-        <Animated.View style={[styles.googleBtnWrap, animStyle(googleAnim)]}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.googleBtn,
-              pressed && { backgroundColor: Colors.googleBtnPressed },
-            ]}
-            onPress={() => {}}
-          >
-            <Image
-              source={{
-                uri: "https://developers.google.com/identity/images/g-logo.png",
-              }}
-              style={styles.googleIcon}
-            />
-            <Text style={styles.googleTxt}>Sign in with Google</Text>
+            {loading ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.continueTxt}>Continue</Text>
+            )}
           </Pressable>
         </Animated.View>
       </View>
@@ -227,52 +223,15 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 48,
+  },
+  continueBtnDisabled: {
+    opacity: 0.5,
   },
   continueTxt: {
     fontFamily: Typography.fonts.semibold,
     fontSize: Typography.sizes.sm,
     color: Colors.white,
     letterSpacing: 0.2,
-  },
-  orRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Layout.vertical["2xl"],
-    gap: Layout.horizontal.sm,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.divider,
-  },
-  orTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
-    letterSpacing: 1.2,
-  },
-  googleBtnWrap: {
-    alignItems: "center",
-  },
-  googleBtn: {
-    width: "100%",
-    paddingVertical: Layout.vertical.smMd,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 30,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Layout.horizontal.sm,
-    backgroundColor: Colors.white,
-  },
-  googleIcon: {
-    width: iw(20),
-    height: iw(20),
-  },
-  googleTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.sm,
-    color: Colors.label,
   },
 });
