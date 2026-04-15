@@ -4,8 +4,21 @@ import { iw } from "@/shared/utils/responsive";
 import React, { useEffect, useRef } from "react";
 import { Image, Animated, StyleSheet, StatusBar } from "react-native";
 import { router } from "expo-router";
+import { useAuth } from "@/context/auth";
 
 const SplashScreen: React.FC = () => {
+  const { session, user, loading } = useAuth();
+
+  const sessionRef = useRef(session);
+  const userRef = useRef(user);
+  const loadingRef = useRef(loading);
+
+  useEffect(() => {
+    sessionRef.current = session;
+    userRef.current = user;
+    loadingRef.current = loading;
+  }, [session, user, loading]);
+
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoTranslateY = useRef(
@@ -20,6 +33,24 @@ const SplashScreen: React.FC = () => {
   const ring2Scale = useRef(new Animated.Value(0.5)).current;
   const ring3Opacity = useRef(new Animated.Value(0)).current;
   const ring3Scale = useRef(new Animated.Value(0.5)).current;
+
+  const navigate = () => {
+    const s = sessionRef.current;
+    const u = userRef.current;
+
+    if (s && u) {
+      const onboardingDone = u.user_metadata?.onboarding_complete === true;
+      const hasName = !!u.user_metadata?.full_name;
+
+      if (onboardingDone && hasName) {
+        router.replace("/home");
+      } else {
+        router.replace("/onboarding");
+      }
+    } else {
+      router.replace("/login");
+    }
+  };
 
   useEffect(() => {
     const entranceAnim = Animated.parallel([
@@ -121,9 +152,7 @@ const SplashScreen: React.FC = () => {
 
     const exitTimer = setTimeout(() => {
       pulseLoop.stop();
-      exitAnim.start(() => {
-        router.replace("/login");
-      });
+      exitAnim.start(() => navigate());
     }, 2800);
 
     return () => clearTimeout(exitTimer);
