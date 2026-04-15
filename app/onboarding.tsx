@@ -102,7 +102,6 @@ export default function OnboardingScreen() {
     ],
   });
 
-  // ─── Age gate ─────────────────────────────────────────────────────────────
   const isAgeValid = (): boolean => {
     if (!day || !month || !year) return false;
     const dob = new Date(parseInt(year), MONTH_INDEX[month] - 1, parseInt(day));
@@ -117,7 +116,6 @@ export default function OnboardingScreen() {
   const isComplete =
     fullName.trim() !== "" && day !== "" && month !== "" && year !== "";
 
-  // ─── Save profile ─────────────────────────────────────────────────────────
   const handleContinue = async () => {
     if (!isComplete) return;
 
@@ -146,8 +144,7 @@ export default function OnboardingScreen() {
       return;
     }
 
-    // Done — go to home screen
-    router.replace("/home");
+    router.replace("/(tabs)/home");
   };
 
   const getDropdownData = () => {

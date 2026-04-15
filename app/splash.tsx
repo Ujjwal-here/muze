@@ -43,7 +43,7 @@ const SplashScreen: React.FC = () => {
       const hasName = !!u.user_metadata?.full_name;
 
       if (onboardingDone && hasName) {
-        router.replace("/home");
+        router.replace("/(tabs)/home");
       } else {
         router.replace("/onboarding");
       }
