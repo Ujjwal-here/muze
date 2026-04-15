@@ -10,6 +10,8 @@ import {
   Pressable,
   Modal,
   FlatList,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -18,6 +20,7 @@ import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 import { Typography } from "@/constants/typography";
 import { Colors } from "@/constants/colors";
+import { supabase } from "@/shared/lib/supabase";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const MONTHS = [
@@ -37,6 +40,21 @@ const MONTHS = [
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 100 }, (_, i) => String(currentYear - i));
 
+const MONTH_INDEX: Record<string, number> = {
+  January: 1,
+  February: 2,
+  March: 3,
+  April: 4,
+  May: 5,
+  June: 6,
+  July: 7,
+  August: 8,
+  September: 9,
+  October: 10,
+  November: 11,
+  December: 12,
+};
+
 type DropdownType = "day" | "month" | "year" | null;
 
 export default function OnboardingScreen() {
@@ -45,6 +63,7 @@ export default function OnboardingScreen() {
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
+  const [loading, setLoading] = useState(false);
   const nameRef = useRef<TextInput>(null);
 
   const titleAnim = useRef(new Animated.Value(0)).current;
@@ -83,14 +102,53 @@ export default function OnboardingScreen() {
     ],
   });
 
-  const handleContinue = () => {
-    if (fullName.trim() && day && month && year) {
-      router.push("/");
-    }
+  // ─── Age gate ─────────────────────────────────────────────────────────────
+  const isAgeValid = (): boolean => {
+    if (!day || !month || !year) return false;
+    const dob = new Date(parseInt(year), MONTH_INDEX[month] - 1, parseInt(day));
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const hasBirthdayPassed =
+      today.getMonth() > dob.getMonth() ||
+      (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+    return age > 13 || (age === 13 && hasBirthdayPassed);
   };
 
   const isComplete =
     fullName.trim() !== "" && day !== "" && month !== "" && year !== "";
+
+  // ─── Save profile ─────────────────────────────────────────────────────────
+  const handleContinue = async () => {
+    if (!isComplete) return;
+
+    if (!isAgeValid()) {
+      Alert.alert(
+        "Age Requirement",
+        "You must be at least 13 years old to use Muze.",
+      );
+      return;
+    }
+
+    setLoading(true);
+    const dob = `${year}-${String(MONTH_INDEX[month]).padStart(2, "0")}-${String(parseInt(day)).padStart(2, "0")}`;
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        full_name: fullName.trim(),
+        date_of_birth: dob,
+        onboarding_complete: true,
+      },
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+
+    // Done — go to home screen
+    router.replace("/home");
+  };
 
   const getDropdownData = () => {
     if (activeDropdown === "day") return DAYS;
@@ -222,9 +280,13 @@ export default function OnboardingScreen() {
                 isComplete && { backgroundColor: Colors.primaryPressed },
             ]}
             onPress={handleContinue}
-            disabled={!isComplete}
+            disabled={!isComplete || loading}
           >
-            <Text style={styles.continueTxt}>Continue</Text>
+            {loading ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.continueTxt}>Continue</Text>
+            )}
           </Pressable>
         </Animated.View>
       </View>
@@ -278,14 +340,8 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  inner: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
+  root: { flex: 1, backgroundColor: Colors.white },
+  inner: { flex: 1, justifyContent: "space-between" },
   content: {
     paddingHorizontal: Layout.horizontal.lg,
     paddingTop: Layout.vertical["7xl"],
@@ -306,9 +362,7 @@ const styles = StyleSheet.create({
     marginBottom: Layout.vertical["3xl"],
     paddingHorizontal: Layout.horizontal.sm,
   },
-  fieldWrap: {
-    marginBottom: Layout.vertical.xl,
-  },
+  fieldWrap: { marginBottom: Layout.vertical.xl },
   label: {
     fontFamily: Typography.fonts.medium,
     fontSize: Typography.sizes.xs,
@@ -328,10 +382,7 @@ const styles = StyleSheet.create({
     color: Colors.black,
     paddingVertical: 0,
   },
-  dobRow: {
-    flexDirection: "row",
-    gap: Layout.horizontal.sm,
-  },
+  dobRow: { flexDirection: "row", gap: Layout.horizontal.sm },
   dropdown: {
     flex: 1,
     flexDirection: "row",
@@ -344,9 +395,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.horizontal.sm,
     backgroundColor: Colors.white,
   },
-  dropdownMonth: {
-    flex: 1.4,
-  },
+  dropdownMonth: { flex: 1.4 },
   dropdownTxt: {
     fontFamily: Typography.fonts.medium,
     fontSize: Typography.sizes.sm,
@@ -367,10 +416,9 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 48,
   },
-  continueBtnDisabled: {
-    opacity: 0.5,
-  },
+  continueBtnDisabled: { opacity: 0.5 },
   continueTxt: {
     fontFamily: Typography.fonts.semibold,
     fontSize: Typography.sizes.sm,
@@ -407,9 +455,7 @@ const styles = StyleSheet.create({
     paddingVertical: Layout.vertical.md,
     paddingHorizontal: Layout.horizontal.lg,
   },
-  modalItemSelected: {
-    backgroundColor: Colors.inputBg,
-  },
+  modalItemSelected: { backgroundColor: Colors.inputBg },
   modalItemTxt: {
     fontFamily: Typography.fonts.regular,
     fontSize: Typography.sizes.sm,
