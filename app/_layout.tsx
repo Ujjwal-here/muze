@@ -10,10 +10,11 @@ import {
 } from "@expo-google-fonts/cabin";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { AuthProvider } from "@/context/auth";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootNavigator() {
   const [fontsLoaded, fontError] = useFonts({
     Cabin_400Regular,
     Cabin_500Medium,
@@ -39,8 +40,17 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="verification" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }
