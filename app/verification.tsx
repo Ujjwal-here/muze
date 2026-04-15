@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
@@ -15,13 +17,18 @@ import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 import { Typography } from "@/constants/typography";
 import { Colors } from "@/constants/colors";
+import { supabase } from "@/shared/lib/supabase";
 
 const CODE_LENGTH = 6;
 
 export default function VerificationScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const titleAnim = useRef(new Animated.Value(0)).current;
   const subtitleAnim = useRef(new Animated.Value(0)).current;
@@ -45,6 +52,10 @@ export default function VerificationScreen() {
     ]).start();
 
     setTimeout(() => inputRefs.current[0]?.focus(), 500);
+
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
   }, []);
 
   const animStyle = (anim: Animated.Value, offsetY = 16) => ({
@@ -95,11 +106,62 @@ export default function VerificationScreen() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const fullCode = code.join("");
-    if (fullCode.length === CODE_LENGTH) {
-      router.push("/onboarding");
+    if (fullCode.length !== CODE_LENGTH) return;
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.verifyOtp({
+      email: email ?? "",
+      token: fullCode,
+      type: "email",
+    });
+
+    if (error) {
+      setLoading(false);
+      Alert.alert("Invalid code", error.message);
+      setCode(Array(CODE_LENGTH).fill(""));
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      return;
     }
+
+    const { data: userData } = await supabase.auth.getUser();
+    setLoading(false);
+
+    const isNewUser = !userData.user?.user_metadata?.full_name;
+    if (isNewUser) {
+      router.replace("/onboarding");
+    } else {
+      router.replace("/(tabs)/home");
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0 || resending) return;
+
+    setResending(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email ?? "",
+      options: { shouldCreateUser: true },
+    });
+    setResending(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+
+    setResendCooldown(60);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const isComplete = code.every((digit) => digit !== "");
@@ -150,6 +212,28 @@ export default function VerificationScreen() {
               />
             ))}
           </Animated.View>
+
+          <Animated.View style={[styles.resendWrap, animStyle(btnAnim)]}>
+            <Pressable
+              onPress={handleResend}
+              disabled={resendCooldown > 0 || resending}
+            >
+              {resending ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <Text
+                  style={[
+                    styles.resendTxt,
+                    resendCooldown > 0 && styles.resendDisabled,
+                  ]}
+                >
+                  {resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
+                    : "Resend code"}
+                </Text>
+              )}
+            </Pressable>
+          </Animated.View>
         </View>
 
         <Animated.View style={[styles.btnWrap, animStyle(btnAnim)]}>
@@ -161,9 +245,13 @@ export default function VerificationScreen() {
                 isComplete && { backgroundColor: Colors.primaryPressed },
             ]}
             onPress={handleContinue}
-            disabled={!isComplete}
+            disabled={!isComplete || loading}
           >
-            <Text style={styles.continueTxt}>Continue</Text>
+            {loading ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.continueTxt}>Continue</Text>
+            )}
           </Pressable>
         </Animated.View>
       </View>
@@ -226,6 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: Layout.horizontal.sm,
+    marginBottom: Layout.vertical.lg,
   },
   codeInput: {
     width: INPUT_SIZE,
@@ -243,6 +332,18 @@ const styles = StyleSheet.create({
     borderColor: Colors.divider,
     backgroundColor: Colors.white,
   },
+  resendWrap: {
+    alignItems: "center",
+    marginTop: Layout.vertical.sm,
+  },
+  resendTxt: {
+    fontFamily: Typography.fonts.medium,
+    fontSize: Typography.sizes.xs,
+    color: Colors.primary,
+  },
+  resendDisabled: {
+    color: Colors.muted,
+  },
   btnWrap: {
     paddingHorizontal: Layout.horizontal.lg,
     paddingBottom: Layout.vertical["3xl"],
@@ -253,6 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 48,
   },
   continueBtnDisabled: {
     opacity: 0.5,
