@@ -65,6 +65,13 @@ export function PickerModal({
                 >
                   {item}
                 </Text>
+                {selectedValue === item && (
+                  <Ionicons
+                    name="checkmark"
+                    size={iw(18)}
+                    color={Colors.primary}
+                  />
+                )}
               </Pressable>
             )}
           />
@@ -97,24 +104,27 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   title: {
-    fontFamily: Typography.fonts.semibold,
+    fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.base,
     color: Colors.black,
   },
   item: {
     paddingVertical: Layout.vertical.md,
     paddingHorizontal: Layout.horizontal.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   itemSelected: {
     backgroundColor: Colors.inputBg,
   },
   itemText: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
     color: Colors.label,
   },
   itemTextSelected: {
-    fontFamily: Typography.fonts.semibold,
-    color: Colors.primary,
+    fontFamily: Typography.fonts.dm.semibold,
+    color: Colors.black,
   },
 });
