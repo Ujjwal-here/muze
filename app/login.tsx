@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Image,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, Animated, Image, Alert } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -78,6 +71,7 @@ export default function LoginScreen() {
             label="Continue"
             onPress={handleContinue}
             loading={loading}
+            loadingLabel="Processing..."
             disabled={!email.trim()}
           />
         </Animated.View>
@@ -94,23 +88,23 @@ const styles = StyleSheet.create({
   },
   logoWrap: {
     alignItems: "center",
-    marginBottom: Layout.vertical.lg,
+    marginBottom: Layout.vertical.md,
   },
   logo: {
     width: iw(70),
     height: iw(70),
   },
   title: {
-    fontFamily: Typography.fonts.bold,
+    fontFamily: Typography.fonts.cabin.bold,
     fontSize: Typography.sizes.xl,
     color: Colors.black,
     textAlign: "center",
-    marginBottom: Layout.vertical.sm,
+    marginBottom: Layout.vertical.md,
   },
   subtitle: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.sm,
-    color: Colors.subtitle,
+    color: Colors.black,
     textAlign: "center",
     lineHeight: Typography.sizes.sm * 1.6,
     marginBottom: Layout.vertical["3xl"],
