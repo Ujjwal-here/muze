@@ -77,6 +77,9 @@ export function OtpCodeInput({
           maxLength={1}
           selectTextOnFocus
           autoComplete="one-time-code"
+          cursorColor={Colors.black}
+          textAlign="center"
+          textAlignVertical="center"
         />
       ))}
     </View>
@@ -96,9 +99,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 10,
-    backgroundColor: Colors.inputBg,
     textAlign: "center",
-    fontFamily: Typography.fonts.semibold,
+    fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xl,
     color: Colors.black,
   },
