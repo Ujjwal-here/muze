@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
-import { iw } from "@/shared/utils/responsive";
+import { Layout } from "@/constants/layout";
 
 export default function TabsLayout() {
   return (
@@ -15,13 +15,14 @@ export default function TabsLayout() {
           backgroundColor: Colors.white,
           borderTopWidth: 1,
           borderTopColor: Colors.border,
-          height: iw(60),
-          paddingBottom: iw(8),
-          paddingTop: iw(6),
+          height: Layout.vertical["7xl"],
+          paddingBottom: Layout.vertical.sm,
+          paddingTop: Layout.vertical.sm,
         },
+
         tabBarLabelStyle: {
-          fontFamily: Typography.fonts.medium,
-          fontSize: 10,
+          fontFamily: Typography.fonts.dm.medium,
+          fontSize: Typography.sizes.xxs,
         },
       }}
     >
@@ -34,15 +35,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: "Search",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="notifications"
         options={{
