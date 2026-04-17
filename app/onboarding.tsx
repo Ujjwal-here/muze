@@ -1,10 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Animated,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, Animated, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
@@ -14,9 +9,12 @@ import { supabase } from "@/shared/lib/supabase";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { FormField } from "@/components/ui/FormField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { DateOfBirthPicker, DateOfBirth, MONTH_INDEX } from "@/components/auth/DateOfBirthPicker";
+import {
+  DateOfBirthPicker,
+  DateOfBirth,
+  MONTH_INDEX,
+} from "@/components/auth/DateOfBirthPicker";
 import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
-
 
 export default function OnboardingScreen() {
   const [fullName, setFullName] = useState("");
@@ -29,7 +27,11 @@ export default function OnboardingScreen() {
   const isAgeValid = (): boolean => {
     const { day, month, year } = dob;
     if (!day || !month || !year) return false;
-    const dobDate = new Date(parseInt(year), MONTH_INDEX[month] - 1, parseInt(day));
+    const dobDate = new Date(
+      parseInt(year),
+      MONTH_INDEX[month] - 1,
+      parseInt(day),
+    );
     const today = new Date();
     const age = today.getFullYear() - dobDate.getFullYear();
     const hasBirthdayPassed =
@@ -51,7 +53,7 @@ export default function OnboardingScreen() {
     if (!isAgeValid()) {
       Alert.alert(
         "Age Requirement",
-        "You must be at least 13 years old to use Muze."
+        "You must be at least 13 years old to use Muze.",
       );
       return;
     }
@@ -94,9 +96,7 @@ export default function OnboardingScreen() {
               label="Full Name"
               value={fullName}
               onChangeText={setFullName}
-              placeholder="Enter your full name"
               autoCapitalize="words"
-              variant="underline"
               style={styles.nameField}
             />
           </Animated.View>
@@ -129,14 +129,14 @@ const styles = StyleSheet.create({
     paddingTop: Layout.vertical["7xl"],
   },
   title: {
-    fontFamily: Typography.fonts.bold,
-    fontSize: Typography.sizes.xl,
+    fontFamily: Typography.fonts.cabin.bold,
+    fontSize: Typography.sizes.lg,
     color: Colors.black,
     textAlign: "center",
     marginBottom: Layout.vertical.md,
   },
   subtitle: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
     color: Colors.subtitle,
     textAlign: "center",
