@@ -3,7 +3,6 @@ import {
   Pressable,
   Text,
   StyleSheet,
-  ActivityIndicator,
   StyleProp,
   ViewStyle,
 } from "react-native";
@@ -15,6 +14,7 @@ interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
   loading?: boolean;
+  loadingLabel?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -23,11 +23,11 @@ export function PrimaryButton({
   label,
   onPress,
   loading = false,
+  loadingLabel = "Loading...",
   disabled = false,
   style,
 }: PrimaryButtonProps) {
   const isDisabled = disabled || loading;
-
   return (
     <Pressable
       style={({ pressed }) => [
@@ -39,11 +39,7 @@ export function PrimaryButton({
       onPress={onPress}
       disabled={isDisabled}
     >
-      {loading ? (
-        <ActivityIndicator color={Colors.white} />
-      ) : (
-        <Text style={styles.label}>{label}</Text>
-      )}
+      <Text style={styles.label}>{loading ? loadingLabel : label}</Text>
     </Pressable>
   );
 }
@@ -55,15 +51,13 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 48,
   },
   btnDisabled: {
     opacity: 0.5,
   },
   label: {
-    fontFamily: Typography.fonts.semibold,
+    fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.sm,
     color: Colors.white,
-    letterSpacing: 0.2,
   },
 });
