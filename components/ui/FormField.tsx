@@ -14,14 +14,16 @@ import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 
-interface FormFieldProps extends Pick<TextInputProps, "autoCapitalize" | "autoCorrect" | "onSubmitEditing"> {
+interface FormFieldProps extends Pick<
+  TextInputProps,
+  "autoCapitalize" | "autoCorrect" | "onSubmitEditing"
+> {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   keyboardType?: KeyboardTypeOptions;
   style?: StyleProp<ViewStyle>;
-  /** Use "underline" for onboarding style, "box" (default) for login style */
   variant?: "box" | "underline";
 }
 
@@ -56,7 +58,7 @@ export function FormField({
           ref={inputRef}
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor={Colors.placeholder}
+          placeholderTextColor={Colors.muted}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
@@ -65,6 +67,7 @@ export function FormField({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           onSubmitEditing={onSubmitEditing}
+          cursorColor={Colors.black}
         />
       </Pressable>
     </View>
@@ -76,9 +79,10 @@ const styles = StyleSheet.create({
     marginBottom: Layout.vertical.lg,
   },
   label: {
-    fontFamily: Typography.fonts.medium,
+    fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.label,
+    color: Colors.muted,
+    letterSpacing: -0.5,
     marginBottom: Layout.vertical.xs,
   },
   inputRowBox: {
@@ -87,7 +91,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: 10,
     paddingHorizontal: Layout.horizontal.sm,
-    backgroundColor: Colors.inputBg,
     justifyContent: "center",
   },
   inputRowBoxFocused: {
@@ -102,8 +105,9 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.sm,
+    letterSpacing: -0.5,
     color: Colors.black,
     paddingVertical: 0,
   },
