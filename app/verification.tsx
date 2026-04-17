@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Pressable,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, Animated, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -16,6 +9,7 @@ import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { OtpCodeInput } from "@/components/auth/OtpCodeInput";
 import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
+import { toast } from "sonner-native";
 
 const CODE_LENGTH = 6;
 
@@ -40,7 +34,9 @@ export default function VerificationScreen() {
 
     if (error) {
       setLoading(false);
-      Alert.alert("Invalid code", error.message);
+      toast.error(error.message, {
+        description: "Please check the code and try again.",
+      });
       setCode(Array(CODE_LENGTH).fill(""));
       return;
     }

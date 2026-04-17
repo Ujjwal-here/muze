@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Animated, Alert } from "react-native";
-import { StatusBar } from "expo-status-bar";
+import { View, StyleSheet, Animated } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -15,6 +14,7 @@ import {
   MONTH_INDEX,
 } from "@/components/auth/DateOfBirthPicker";
 import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
+import { toast } from "sonner-native";
 
 export default function OnboardingScreen() {
   const [fullName, setFullName] = useState("");
@@ -51,27 +51,40 @@ export default function OnboardingScreen() {
     if (!isComplete) return;
 
     if (!isAgeValid()) {
-      Alert.alert(
-        "Age Requirement",
-        "You must be at least 13 years old to use Muze.",
-      );
+      toast.warning("You must be at least 13 years old to use Muze.", {
+        description: "Age Requirement",
+      });
       return;
     }
 
     setLoading(true);
     const dobStr = `${dob.year}-${String(MONTH_INDEX[dob.month]).padStart(2, "0")}-${String(parseInt(dob.day)).padStart(2, "0")}`;
 
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        full_name: fullName.trim(),
-        date_of_birth: dobStr,
-        onboarding_complete: true,
-      },
-    });
-    setLoading(false);
+    try {
+      // supabase.auth.updateUser can hang indefinitely on React Native with
+      // AsyncStorage. Race it against a timeout so the button never gets stuck.
+      const updatePromise = supabase.auth.updateUser({
+        data: {
+          full_name: fullName.trim(),
+          date_of_birth: dobStr,
+          onboarding_complete: true,
+        },
+      });
 
-    if (error) {
-      Alert.alert("Error", error.message);
+      const timeoutPromise = new Promise<{ error: Error }>((resolve) =>
+        setTimeout(() => resolve({ error: new Error("timeout") }), 8000),
+      );
+
+      const { error } = await Promise.race([updatePromise, timeoutPromise]);
+
+      if (error && error.message !== "timeout") {
+        setLoading(false);
+        toast.error(error.message);
+        return;
+      }
+    } catch (e: any) {
+      setLoading(false);
+      toast.error(e?.message ?? "Something went wrong");
       return;
     }
 
@@ -112,6 +125,7 @@ export default function OnboardingScreen() {
             onPress={handleContinue}
             loading={loading}
             disabled={!isComplete}
+            loadingLabel="Updating..."
           />
         </Animated.View>
       </View>

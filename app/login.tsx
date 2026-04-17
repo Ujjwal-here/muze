@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Animated, Image, Alert } from "react-native";
+import { View, StyleSheet, Animated, Image } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -10,6 +10,7 @@ import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { FormField } from "@/components/ui/FormField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
+import { toast } from "sonner-native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert("Error", error.message);
+      toast.error(error.message);
       return;
     }
 
