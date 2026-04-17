@@ -9,16 +9,35 @@ import { PickerModal } from "@/components/common/PickerModal";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 100 }, (_, i) => String(currentYear - i));
 
 export const MONTH_INDEX: Record<string, number> = {
-  January: 1, February: 2, March: 3, April: 4,
-  May: 5, June: 6, July: 7, August: 8,
-  September: 9, October: 10, November: 11, December: 12,
+  January: 1,
+  February: 2,
+  March: 3,
+  April: 4,
+  May: 5,
+  June: 6,
+  July: 7,
+  August: 8,
+  September: 9,
+  October: 10,
+  November: 11,
+  December: 12,
 };
 
 type DropdownType = "day" | "month" | "year" | null;
@@ -107,9 +126,9 @@ export function DateOfBirthPicker({ value, onChange }: DateOfBirthPickerProps) {
 
 const styles = StyleSheet.create({
   label: {
-    fontFamily: Typography.fonts.medium,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.label,
+    color: Colors.muted,
     marginBottom: Layout.vertical.xs,
   },
   row: {
@@ -129,13 +148,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   dropdownTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.sm,
+    fontFamily: Typography.fonts.dm.medium,
+    fontSize: Typography.sizes.xs,
     color: Colors.black,
   },
   dropdownPlaceholder: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.placeholder,
+    color: Colors.black,
   },
 });
