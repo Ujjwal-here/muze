@@ -1,11 +1,6 @@
 import React, { ReactNode } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  ViewStyle,
-  StyleProp,
-} from "react-native";
+import { StyleSheet, ViewStyle, StyleProp } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { StatusBar } from "expo-status-bar";
 import { Colors } from "@/constants/colors";
 
@@ -21,19 +16,27 @@ export function ScreenWrapper({
   style,
 }: ScreenWrapperProps) {
   return (
-    <KeyboardAvoidingView
-      style={[styles.root, style]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <KeyboardAwareScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, style]}
+      enableOnAndroid
+      extraScrollHeight={20}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
       <StatusBar style={statusBarStyle} />
       {children}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: Colors.white,
+  },
+  content: {
+    flexGrow: 1,
     backgroundColor: Colors.white,
   },
 });
