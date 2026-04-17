@@ -56,6 +56,7 @@ function RootNavigator() {
         <Stack.Screen name="verification" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="create_post" options={{ headerShown: false }} />
         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
