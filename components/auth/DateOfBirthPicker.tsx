@@ -94,7 +94,7 @@ export function DateOfBirthPicker({ value, onChange }: DateOfBirthPickerProps) {
         >
           {fieldValue || field.charAt(0).toUpperCase() + field.slice(1)}
         </Text>
-        <Ionicons name="chevron-down" size={iw(16)} color={Colors.muted} />
+        <Ionicons name="chevron-down" size={iw(14)} color={Colors.muted} />
       </Pressable>
     );
   };
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   dropdownTxt: {
     fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
+    fontSize: Typography.sizes.sm,
     color: Colors.black,
   },
   dropdownPlaceholder: {
