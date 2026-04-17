@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   Animated,
   Pressable,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Layout } from "@/constants/layout";
@@ -24,12 +23,9 @@ export default function VerificationScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { anims, animStyle } = useFadeSlideAnims(4);
-  const [titleAnim, subtitleAnim, codeAnim, btnAnim] = anims;
+  const { anims, animStyle } = useFadeSlideAnims(3);
+  const [titleAnim, subtitleAnim, codeAnim] = anims;
 
   const handleContinue = async () => {
     const fullCode = code.join("");
@@ -54,33 +50,6 @@ export default function VerificationScreen() {
 
     const isNewUser = !userData.user?.user_metadata?.full_name;
     router.replace(isNewUser ? "/onboarding" : "/(tabs)/home");
-  };
-
-  const handleResend = async () => {
-    if (resendCooldown > 0 || resending) return;
-
-    setResending(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email ?? "",
-      options: { shouldCreateUser: true },
-    });
-    setResending(false);
-
-    if (error) {
-      Alert.alert("Error", error.message);
-      return;
-    }
-
-    setResendCooldown(60);
-    cooldownRef.current = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          if (cooldownRef.current) clearInterval(cooldownRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
   };
 
   const isComplete = code.every((digit) => digit !== "");
@@ -108,38 +77,17 @@ export default function VerificationScreen() {
           <Animated.View style={animStyle(codeAnim)}>
             <OtpCodeInput value={code} onChange={setCode} />
           </Animated.View>
-
-          <Animated.View style={[styles.resendWrap, animStyle(btnAnim)]}>
-            <Pressable
-              onPress={handleResend}
-              disabled={resendCooldown > 0 || resending}
-            >
-              {resending ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
-              ) : (
-                <Text
-                  style={[
-                    styles.resendTxt,
-                    resendCooldown > 0 && styles.resendDisabled,
-                  ]}
-                >
-                  {resendCooldown > 0
-                    ? `Resend code in ${resendCooldown}s`
-                    : "Resend code"}
-                </Text>
-              )}
-            </Pressable>
-          </Animated.View>
         </View>
 
-        <Animated.View style={[styles.btnWrap, animStyle(btnAnim)]}>
+        <View style={styles.btnWrap}>
           <PrimaryButton
             label="Continue"
             onPress={handleContinue}
             loading={loading}
+            loadingLabel="Verifying..."
             disabled={!isComplete}
           />
-        </Animated.View>
+        </View>
       </View>
     </ScreenWrapper>
   );
@@ -155,8 +103,8 @@ const styles = StyleSheet.create({
     paddingTop: Layout.vertical["7xl"],
   },
   title: {
-    fontFamily: Typography.fonts.bold,
-    fontSize: Typography.sizes.xl,
+    fontFamily: Typography.fonts.cabin.bold,
+    fontSize: Typography.sizes.lg,
     color: Colors.black,
     textAlign: "center",
     marginBottom: Layout.vertical.md,
@@ -166,7 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: Layout.vertical["3xl"],
   },
   subtitle: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
     color: Colors.subtitle,
     textAlign: "center",
@@ -180,27 +128,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   emailTxt: {
-    fontFamily: Typography.fonts.medium,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
     color: Colors.black,
   },
   changeTxt: {
-    fontFamily: Typography.fonts.medium,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
     color: Colors.primary,
     textDecorationLine: "underline",
-  },
-  resendWrap: {
-    alignItems: "center",
-    marginTop: Layout.vertical.sm,
-  },
-  resendTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.primary,
-  },
-  resendDisabled: {
-    color: Colors.muted,
   },
   btnWrap: {
     paddingHorizontal: Layout.horizontal.lg,
