@@ -1,352 +1,169 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
+  Pressable,
+  ScrollView,
+  Animated,
+  RefreshControl,
+  ActivityIndicator,
   Text,
   StyleSheet,
-  ScrollView,
-  Pressable,
-  Image,
-  Animated,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { Layout } from "@/constants/layout";
+import { router } from "expo-router";
 import { iw } from "@/shared/utils/responsive";
+import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { Colors } from "@/constants/colors";
-
-const TABS = ["Following", "All Muze"] as const;
-
-const DUMMY_POSTS = [
-  {
-    id: "1",
-    username: "manoj",
-    displayName: "Manoj Adithya",
-    date: "Apr 10",
-    content:
-      "Setbacks and delays aren't roadblocks, they're part of the journey. What matters is how you navigate them and turn challenges into wins.",
-    likes: 13,
-    comments: 2,
-    views: 40,
-  },
-  {
-    id: "2",
-    username: "ferdowss",
-    displayName: "Ferdows Sanehi",
-    date: "Apr 10",
-    content:
-      "Farmers and Lorry drivers who are self employed or contractors (mostly all of them) have gone on strike across Ireland and France.",
-    likes: 10,
-    comments: 0,
-    views: 29,
-  },
-  {
-    id: "3",
-    username: "manoj",
-    displayName: "Manoj Adithya",
-    date: "Apr 9",
-    content:
-      "At Muze, we faced our fair share of setbacks. But as a team, we leaned into our strengths, worked through our weaknesses, and reached our goal.",
-    likes: 13,
-    comments: 1,
-    views: 40,
-  },
-  {
-    id: "4",
-    username: "ferdowss",
-    displayName: "Ferdows Sanehi",
-    date: "Apr 5",
-    content: "The guy has lost his mind on Easter Sunday.",
-    likes: 5,
-    comments: 0,
-    views: 15,
-  },
-];
-
-function PostCard({ post }: { post: (typeof DUMMY_POSTS)[0] }) {
-  const initial = post.displayName.charAt(0).toUpperCase();
-
-  return (
-    <View style={styles.postCard}>
-      <View style={styles.postHeader}>
-        <View style={styles.postAvatar}>
-          <Text style={styles.postAvatarTxt}>{initial}</Text>
-        </View>
-        <View style={styles.postMeta}>
-          <View style={styles.postNameRow}>
-            <Text style={styles.postUsername}>@{post.username}</Text>
-            <Text style={styles.postDot}>&middot;</Text>
-            <Text style={styles.postDisplayName}>{post.displayName}</Text>
-          </View>
-          <Text style={styles.postDate}>{post.date}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.postContent}>{post.content}</Text>
-
-      <View style={styles.postActions}>
-        <Pressable style={styles.actionItem}>
-          <Ionicons
-            name="arrow-undo-outline"
-            size={iw(16)}
-            color={Colors.muted}
-          />
-        </Pressable>
-        <Pressable style={styles.actionItem}>
-          <Ionicons
-            name="thumbs-up-outline"
-            size={iw(16)}
-            color={Colors.muted}
-          />
-          <Text style={styles.actionCount}>{post.likes}</Text>
-        </Pressable>
-        <Pressable style={styles.actionItem}>
-          <Ionicons
-            name="thumbs-down-outline"
-            size={iw(16)}
-            color={Colors.muted}
-          />
-        </Pressable>
-        <Pressable style={styles.actionItem}>
-          <Ionicons
-            name="chatbubble-outline"
-            size={iw(14)}
-            color={Colors.muted}
-          />
-          <Text style={styles.actionCount}>{post.comments}</Text>
-        </Pressable>
-        <Pressable style={styles.actionItem}>
-          <Ionicons name="repeat-outline" size={iw(16)} color={Colors.muted} />
-        </Pressable>
-        <View style={styles.actionSpacer} />
-        <View style={styles.actionItem}>
-          <Ionicons name="eye-outline" size={iw(14)} color={Colors.muted} />
-          <Text style={styles.actionCount}>{post.views}</Text>
-        </View>
-        <Pressable style={styles.actionItem}>
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={iw(16)}
-            color={Colors.muted}
-          />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
+import { useAuth } from "@/context/auth";
+import { fetchFeed } from "@/shared/services/posts";
+import type { PostWithMeta } from "@/shared/types/post";
+import { PostCard, FeedTopBar, FeedEmptyState } from "@/components/feed";
+import type { FeedTab } from "@/components/feed";
+import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 
 export default function HomeScreen() {
-  const [activeTab, setActiveTab] =
-    useState<(typeof TABS)[number]>("Following");
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<FeedTab>("Following");
+  const [posts, setPosts] = useState<PostWithMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const loadPosts = useCallback(
+    async (isRefresh = false) => {
+      if (!user) return;
+      try {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+        setError(null);
+        const feedType = activeTab === "Following" ? "following" : "discover";
+        const data = await fetchFeed(user.id, { feed_type: feedType });
+        setPosts(data);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }).start();
+      } catch (err: any) {
+        setError(err.message || "Failed to load posts");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user, activeTab],
+  );
+
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    fadeAnim.setValue(0);
+    loadPosts();
+  }, [loadPosts]);
+
+  const handleLikeChange = (postId: string, liked: boolean, count: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, is_liked: liked, likes_count: count } : p,
+      ),
+    );
+  };
+
+  const handleDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
+    <ScreenWrapper scrollable={false} style={styles.root}>
+      <FeedTopBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <View style={styles.header}>
-        <Image
-          source={require("@/assets/images/muze-logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <View style={styles.headerRight}>
-          <Text style={styles.latestTxt}>Latest</Text>
-          <Ionicons name="chevron-down" size={iw(14)} color={Colors.muted} />
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </View>
-
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <Pressable
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text
-              style={[styles.tabTxt, activeTab === tab && styles.tabTxtActive]}
-            >
-              {tab}
-            </Text>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorTxt}>{error}</Text>
+          <Pressable style={styles.retryBtn} onPress={() => loadPosts()}>
+            <Text style={styles.retryTxt}>Retry</Text>
           </Pressable>
-        ))}
-      </View>
+        </View>
+      ) : (
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <ScrollView
+            style={styles.feed}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.feedContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => loadPosts(true)}
+                tintColor={Colors.primary}
+              />
+            }
+          >
+            {posts.length === 0 ? (
+              <FeedEmptyState activeTab={activeTab} />
+            ) : (
+              posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={user?.id}
+                  onLikeChange={handleLikeChange}
+                  onDeleted={handleDeleted}
+                />
+              ))
+            )}
 
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <ScrollView
-          style={styles.feed}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.feedContent}
-        >
-          {DUMMY_POSTS.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+            <View style={styles.endOfFeed}>
+              <Text style={styles.endOfFeedTxt}>You're all caught up</Text>
+            </View>
+          </ScrollView>
+        </Animated.View>
+      )}
 
-          <View style={styles.endOfFeed}>
-            <Text style={styles.endOfFeedTxt}>You're all caught up</Text>
-          </View>
-        </ScrollView>
-      </Animated.View>
-
-      <Pressable style={styles.fab}>
+      <Pressable style={styles.fab} onPress={() => router.push("/create_post")}>
         <Ionicons name="pencil" size={iw(22)} color={Colors.white} />
       </Pressable>
-    </View>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  root: { backgroundColor: "#F5F5F5" },
+  feed: { flex: 1 },
+  feedContent: { paddingBottom: Layout.vertical["3xl"] },
+  centered: {
     flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Layout.horizontal.lg,
-    paddingTop: Layout.vertical["6xl"],
-    paddingBottom: Layout.vertical.sm,
-  },
-  logo: {
-    width: iw(32),
-    height: iw(32),
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xxs,
-  },
-  latestTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  tabBar: {
-    flexDirection: "row",
-    paddingHorizontal: Layout.horizontal.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  tab: {
-    paddingVertical: Layout.vertical.sm,
-    paddingHorizontal: Layout.horizontal.md,
-    marginRight: Layout.horizontal.sm,
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
-  },
-  tabTxt: {
-    fontFamily: Typography.fonts.medium,
-    fontSize: Typography.sizes.sm,
-    color: Colors.muted,
-  },
-  tabTxtActive: {
-    color: Colors.black,
-    fontFamily: Typography.fonts.semibold,
-  },
-  feed: {
-    flex: 1,
-  },
-  feedContent: {
-    paddingBottom: Layout.vertical["3xl"],
-  },
-  postCard: {
-    paddingHorizontal: Layout.horizontal.lg,
-    paddingVertical: Layout.vertical.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  postHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Layout.vertical.sm,
-  },
-  postAvatar: {
-    width: iw(36),
-    height: iw(36),
-    borderRadius: iw(18),
-    backgroundColor: Colors.label,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: Layout.horizontal.sm,
+    gap: Layout.vertical.md,
   },
-  postAvatarTxt: {
-    fontFamily: Typography.fonts.bold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.white,
-  },
-  postMeta: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  postNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xxs,
-  },
-  postUsername: {
-    fontFamily: Typography.fonts.semibold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-  },
-  postDot: {
-    fontFamily: Typography.fonts.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  postDisplayName: {
-    fontFamily: Typography.fonts.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.subtitle,
-  },
-  postDate: {
-    fontFamily: Typography.fonts.regular,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
-  },
-  postContent: {
-    fontFamily: Typography.fonts.regular,
+  errorTxt: {
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
-    lineHeight: Typography.sizes.sm * 1.6,
-    marginBottom: Layout.vertical.md,
-  },
-  postActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.md,
-  },
-  actionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xxs,
-  },
-  actionCount: {
-    fontFamily: Typography.fonts.regular,
-    fontSize: Typography.sizes.xxs,
     color: Colors.muted,
+    textAlign: "center",
+    paddingHorizontal: Layout.horizontal.lg,
   },
-  actionSpacer: {
-    flex: 1,
+  retryBtn: {
+    paddingHorizontal: iw(20),
+    paddingVertical: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: iw(20),
+  },
+  retryTxt: {
+    fontFamily: Typography.fonts.dm.semibold,
+    fontSize: Typography.sizes.sm,
+    color: Colors.white,
   },
   endOfFeed: {
     alignItems: "center",
     paddingVertical: Layout.vertical["3xl"],
   },
   endOfFeedTxt: {
-    fontFamily: Typography.fonts.regular,
+    fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
     color: Colors.muted,
   },
