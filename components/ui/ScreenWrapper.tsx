@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
-import { View, StyleSheet, ViewStyle, StyleProp } from "react-native";
+import { StyleSheet, ViewStyle, StyleProp } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { StatusBar } from "expo-status-bar";
 import { Colors } from "@/constants/colors";
@@ -9,6 +10,7 @@ interface ScreenWrapperProps {
   statusBarStyle?: "dark" | "light" | "auto";
   style?: StyleProp<ViewStyle>;
   scrollable?: boolean;
+  edges?: React.ComponentProps<typeof SafeAreaView>["edges"];
 }
 
 export function ScreenWrapper({
@@ -16,28 +18,31 @@ export function ScreenWrapper({
   statusBarStyle = "dark",
   style,
   scrollable = true,
+  edges = ["top", "left", "right"],
 }: ScreenWrapperProps) {
   if (!scrollable) {
     return (
-      <View style={[styles.root, style]}>
+      <SafeAreaView style={[styles.root, style]} edges={edges}>
         <StatusBar style={statusBarStyle} />
         {children}
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <KeyboardAwareScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, style]}
-      enableOnAndroid
-      extraScrollHeight={20}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
+    <SafeAreaView style={styles.root} edges={edges}>
       <StatusBar style={statusBarStyle} />
-      {children}
-    </KeyboardAwareScrollView>
+      <KeyboardAwareScrollView
+        style={styles.root}
+        contentContainerStyle={[styles.content, style]}
+        enableOnAndroid
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </KeyboardAwareScrollView>
+    </SafeAreaView>
   );
 }
 
