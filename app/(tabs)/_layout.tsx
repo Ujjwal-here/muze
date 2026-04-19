@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, MessageCircle, User } from "lucide-react-native";
+import { Home, MessageCircle } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
@@ -41,15 +41,6 @@ export default function TabsLayout() {
           title: "Messages",
           tabBarIcon: ({ color, size }) => (
             <MessageCircle size={size} color={color} strokeWidth={1.75} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} strokeWidth={1.75} />
           ),
         }}
       />
