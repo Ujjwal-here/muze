@@ -25,15 +25,15 @@ export function PostAvatar({ avatarUrl, name }: Props) {
 
 const styles = StyleSheet.create({
   img: {
-    width: iw(36),
-    height: iw(36),
-    borderRadius: iw(18),
+    width: iw(22),
+    height: iw(22),
+    borderRadius: 999,
     marginRight: 8,
   },
   placeholder: {
-    width: iw(36),
-    height: iw(36),
-    borderRadius: iw(18),
+    width: iw(22),
+    height: iw(22),
+    borderRadius: 999,
     backgroundColor: Colors.label,
     alignItems: "center",
     justifyContent: "center",
