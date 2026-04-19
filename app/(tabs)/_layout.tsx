@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Home, MessageCircle, User } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
@@ -31,17 +31,7 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: "Alerts",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications-outline" size={size} color={color} />
+            <Home size={size} color={color} strokeWidth={1.75} />
           ),
         }}
       />
@@ -50,7 +40,7 @@ export default function TabsLayout() {
         options={{
           title: "Messages",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble-outline" size={size} color={color} />
+            <MessageCircle size={size} color={color} strokeWidth={1.75} />
           ),
         }}
       />
@@ -59,7 +49,7 @@ export default function TabsLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <User size={size} color={color} strokeWidth={1.75} />
           ),
         }}
       />
