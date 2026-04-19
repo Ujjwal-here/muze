@@ -9,7 +9,7 @@ import {
   Text,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Pencil } from "lucide-react-native";
 import { router } from "expo-router";
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
@@ -124,7 +124,7 @@ export default function HomeScreen() {
       )}
 
       <Pressable style={styles.fab} onPress={() => router.push("/create_post")}>
-        <Ionicons name="pencil" size={iw(22)} color={Colors.white} />
+        <Pencil size={iw(22)} color={Colors.white} strokeWidth={1.75} />
       </Pressable>
     </ScreenWrapper>
   );
