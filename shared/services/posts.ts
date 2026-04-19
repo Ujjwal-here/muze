@@ -16,32 +16,77 @@ const POST_SELECT = `
   ),
   is_liked:post_reactions!left (
     id
-  ),
-  original_post:posts!original_post_id (
-    *,
-    author:profiles!user_id (
-      id, username, full_name, avatar_url
-    )
+  )
+`;
+
+const ORIGINAL_POST_SELECT = `
+  *,
+  author:profiles!user_id (
+    id, username, full_name, avatar_url
   )
 `;
 
 const viewedPostIds = new Set<string>();
 
 function normalise(raw: any, userId?: string): PostWithMeta {
+  if (!raw) return raw;
+
   const isLiked = Array.isArray(raw.is_liked)
     ? raw.is_liked.length > 0
     : !!raw.is_liked;
 
-  const original = raw.original_post
-    ? normalise(raw.original_post, userId)
-    : null;
+  // Supabase returns to-one joins as arrays — unwrap safely
+  const author = Array.isArray(raw.author)
+    ? (raw.author[0] ?? null)
+    : (raw.author ?? null);
+
+  const rawOriginal = Array.isArray(raw.original_post)
+    ? (raw.original_post[0] ?? null)
+    : (raw.original_post ?? null);
+
+  const original = rawOriginal ? normalise(rawOriginal, userId) : null;
 
   return {
     ...raw,
+    author,
     is_liked: isLiked,
     is_reposted: false,
     original_post: original,
   };
+}
+
+// Fetch original posts separately and merge — avoids self-join FK ambiguity
+async function enrichWithOriginalPosts(
+  posts: PostWithMeta[],
+): Promise<PostWithMeta[]> {
+  const ids = posts
+    .filter((p) => p.original_post_id && !p.original_post)
+    .map((p) => p.original_post_id as string);
+
+  if (!ids.length) return posts;
+
+  const { data } = await supabase
+    .from("posts")
+    .select(ORIGINAL_POST_SELECT)
+    .in("id", ids);
+
+  if (!data || !data.length) return posts;
+
+  const originalMap = new Map<string, PostWithMeta>();
+  for (const row of data) {
+    const norm = normalise(row);
+    originalMap.set(norm.id, norm);
+  }
+
+  return posts.map((p) => {
+    if (p.original_post_id && !p.original_post) {
+      return {
+        ...p,
+        original_post: originalMap.get(p.original_post_id) ?? null,
+      };
+    }
+    return p;
+  });
 }
 
 async function enrichWithRepostStatus(
@@ -92,7 +137,8 @@ export async function fetchFeed(
   if (error) throw error;
 
   const posts = (data ?? []).map((r) => normalise(r, userId));
-  return enrichWithRepostStatus(posts, userId);
+  const withOriginals = await enrichWithOriginalPosts(posts);
+  return enrichWithRepostStatus(withOriginals, userId);
 }
 
 export async function fetchUserPosts(
@@ -114,7 +160,8 @@ export async function fetchUserPosts(
   if (error) throw error;
 
   const posts = (data ?? []).map((r) => normalise(r, userId));
-  return enrichWithRepostStatus(posts, userId);
+  const withOriginals = await enrichWithOriginalPosts(posts);
+  return enrichWithRepostStatus(withOriginals, userId);
 }
 
 export async function fetchPost(
@@ -130,14 +177,15 @@ export async function fetchPost(
   if (error) return null;
 
   const post = normalise(data, userId);
-  if (!userId) return post;
+  const [withOriginal] = await enrichWithOriginalPosts([post]);
+  if (!userId) return withOriginal;
 
   if (!viewedPostIds.has(postId)) {
     viewedPostIds.add(postId);
     supabase.rpc("increment_view", { p_post_id: postId }).then(() => {});
   }
 
-  const [enriched] = await enrichWithRepostStatus([post], userId);
+  const [enriched] = await enrichWithRepostStatus([withOriginal], userId);
   return enriched;
 }
 
@@ -159,6 +207,7 @@ export async function fetchPostThread(
     normalise(r, userId),
   ) as PostWithMeta[];
 
+  replies = await enrichWithOriginalPosts(replies);
   if (userId) {
     replies = await enrichWithRepostStatus(replies, userId);
   }
