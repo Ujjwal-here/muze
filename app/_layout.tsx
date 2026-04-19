@@ -62,7 +62,6 @@ function RootNavigator() {
           name="chat/[conversationId]"
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="chat/new" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
