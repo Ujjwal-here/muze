@@ -6,10 +6,9 @@ import {
   Pressable,
   Modal,
   TouchableWithoutFeedback,
-  Share,
-  Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Trash2 } from "lucide-react-native";
+import { toast } from "sonner-native";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
@@ -34,48 +33,27 @@ export function PostMenu({
 }: PostMenuProps) {
   const isOwner = post.user_id === currentUserId;
 
-  const handleCopyLink = async () => {
-    onClose();
-    try {
-      await Share.share({
-        message: `Check out this post on Muze!`,
-        url: `muze://post/${post.id}`,
-      });
-    } catch {}
-  };
-
   const handleDelete = () => {
     onClose();
-    Alert.alert(
-      "Delete Post",
-      "Are you sure you want to delete this post? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deletePost(post.id);
-              onDeleted?.(post.id);
-            } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed to delete post.");
-            }
-          },
+    toast("Delete this post?", {
+      description: "This cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            await deletePost(post.id);
+            onDeleted?.(post.id);
+            toast.success("Post deleted.");
+          } catch (err: any) {
+            toast.error(err.message || "Failed to delete post.");
+          }
         },
-      ],
-    );
-  };
-
-  const handleEdit = () => {
-    onClose();
-    // Edit screen can be wired later
-    Alert.alert("Coming soon", "Post editing will be available soon.");
-  };
-
-  const handlePin = () => {
-    onClose();
-    Alert.alert("Coming soon", "Pinning to profile will be available soon.");
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   return (
@@ -90,36 +68,11 @@ export function PostMenu({
       </TouchableWithoutFeedback>
 
       <View style={styles.sheet}>
-        {/* Handle bar */}
         <View style={styles.handle} />
 
         {isOwner && (
           <MenuItem
-            icon="create-outline"
-            label="Edit Post"
-            onPress={handleEdit}
-          />
-        )}
-
-        <MenuItem
-          icon="link-outline"
-          label="Copy link to post"
-          onPress={handleCopyLink}
-        />
-
-        {isOwner && (
-          <MenuItem
-            icon="pin-outline"
-            label="Pin to Profile"
-            onPress={handlePin}
-          />
-        )}
-
-        {isOwner && <View style={styles.menuDivider} />}
-
-        {isOwner && (
-          <MenuItem
-            icon="trash-outline"
+            icon={<Trash2 size={iw(20)} color="#E53935" strokeWidth={1.75} />}
             label="Delete post"
             onPress={handleDelete}
             danger
@@ -140,7 +93,7 @@ function MenuItem({
   onPress,
   danger = false,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   onPress: () => void;
   danger?: boolean;
@@ -153,11 +106,7 @@ function MenuItem({
       ]}
       onPress={onPress}
     >
-      <Ionicons
-        name={icon as any}
-        size={iw(20)}
-        color={danger ? "#E53935" : Colors.black}
-      />
+      {icon}
       <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]}>
         {label}
       </Text>
@@ -202,7 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.inputBg,
   },
   menuLabel: {
-    fontFamily: Typography.fonts.medium,
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.sm,
     color: Colors.black,
   },
@@ -222,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.inputBg,
   },
   cancelTxt: {
-    fontFamily: Typography.fonts.semibold,
+    fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.sm,
     color: Colors.black,
   },
