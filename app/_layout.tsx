@@ -57,7 +57,12 @@ function RootNavigator() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="create_post" options={{ headerShown: false }} />
-        <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="quote_post" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="chat/[conversationId]"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="chat/new" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </>
