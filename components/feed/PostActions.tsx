@@ -1,7 +1,13 @@
-import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import {
+  CornerUpLeft,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquareMore,
+  Repeat,
+  Eye,
+  MoreVertical,
+} from "lucide-react-native";
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -11,17 +17,31 @@ import type { PostWithMeta } from "@/shared/types/post";
 type Props = {
   post: PostWithMeta;
   liked: boolean;
+  disliked: boolean;
   likesCount: number;
+  reposted: boolean;
+  repostsCount: number;
   onLike: () => void;
+  onDislike: () => void;
   onMenuOpen: () => void;
+  onRepostPress: () => void;
 };
+
+const ICON_SIZE = iw(15);
+const MENU_ICON_SIZE = iw(16);
+const STROKE = 1.75;
 
 export function PostActions({
   post,
   liked,
+  disliked,
   likesCount,
+  reposted,
+  repostsCount,
   onLike,
+  onDislike,
   onMenuOpen,
+  onRepostPress,
 }: Props) {
   const stop = (e: any) => e.stopPropagation();
 
@@ -32,82 +52,119 @@ export function PostActions({
         style={styles.item}
         onPress={(e) => {
           stop(e);
-          router.push(`/post/${post.id}`);
         }}
       >
-        <Ionicons
-          name="arrow-undo-outline"
-          size={iw(16)}
-          color={Colors.muted}
-        />
-      </Pressable>
-
-      {/* Like */}
-      <Pressable
-        style={styles.item}
-        onPress={(e) => {
-          stop(e);
-          onLike();
-        }}
-      >
-        <Ionicons
-          name={liked ? "thumbs-up" : "thumbs-up-outline"}
-          size={iw(16)}
-          color={liked ? Colors.primary : Colors.muted}
-        />
-        {likesCount > 0 && (
-          <Text style={[styles.count, liked && styles.countActive]}>
-            {likesCount}
-          </Text>
-        )}
-      </Pressable>
-
-      {/* Dislike */}
-      <Pressable style={styles.item} onPress={stop}>
-        <Ionicons
-          name="thumbs-down-outline"
-          size={iw(16)}
-          color={Colors.muted}
-        />
-      </Pressable>
-
-      {/* Comment */}
-      <Pressable
-        style={styles.item}
-        onPress={(e) => {
-          stop(e);
-          router.push(`/post/${post.id}`);
-        }}
-      >
-        <Ionicons
-          name="chatbubble-outline"
-          size={iw(14)}
-          color={Colors.muted}
-        />
+        <View style={styles.iconBg}>
+          <CornerUpLeft
+            size={ICON_SIZE}
+            color={Colors.muted}
+            strokeWidth={STROKE}
+          />
+        </View>
         {post.comments_count > 0 && (
           <Text style={styles.count}>{post.comments_count}</Text>
         )}
       </Pressable>
 
-      {/* Repost */}
-      <Pressable style={styles.item} onPress={stop}>
-        <Ionicons name="repeat-outline" size={iw(16)} color={Colors.muted} />
-        {post.reposts_count > 0 && (
-          <Text style={styles.count}>{post.reposts_count}</Text>
+      <View style={styles.item}>
+        <View
+          style={[
+            styles.likeDislikeGroup,
+            (liked || disliked) && styles.likeDislikeGroupActive,
+          ]}
+        >
+          <Pressable
+            style={styles.likeBtn}
+            onPress={(e) => {
+              stop(e);
+              onLike();
+            }}
+          >
+            <ThumbsUp
+              size={ICON_SIZE}
+              color={liked ? Colors.primary : Colors.muted}
+              fill={liked ? Colors.primary : "transparent"}
+              strokeWidth={STROKE}
+            />
+            {likesCount > 0 && (
+              <Text style={[styles.count, liked && styles.countActive]}>
+                {likesCount}
+              </Text>
+            )}
+          </Pressable>
+
+          <View
+            style={[
+              styles.divider,
+              (liked || disliked) && styles.dividerActive,
+            ]}
+          />
+
+          <Pressable
+            style={styles.dislikeBtn}
+            onPress={(e) => {
+              stop(e);
+              onDislike();
+            }}
+          >
+            <ThumbsDown
+              size={ICON_SIZE}
+              color={disliked ? Colors.primary : Colors.muted}
+              fill={disliked ? Colors.primary : "transparent"}
+              strokeWidth={STROKE}
+            />
+          </Pressable>
+        </View>
+      </View>
+
+      <Pressable
+        style={styles.item}
+        onPress={(e) => {
+          stop(e);
+        }}
+      >
+        <View style={styles.iconBg}>
+          <MessageSquareMore
+            size={ICON_SIZE}
+            color={Colors.muted}
+            strokeWidth={STROKE}
+          />
+        </View>
+        {post.comments_count > 0 && (
+          <Text style={styles.count}>{post.comments_count}</Text>
+        )}
+      </Pressable>
+
+      <Pressable
+        style={styles.item}
+        onPress={(e) => {
+          stop(e);
+          onRepostPress();
+        }}
+      >
+        <View style={[styles.iconBg, reposted && styles.iconBgActive]}>
+          <Repeat
+            size={ICON_SIZE}
+            color={reposted ? Colors.primary : Colors.muted}
+            strokeWidth={STROKE}
+          />
+        </View>
+        {repostsCount > 0 && (
+          <Text style={[styles.count, reposted && styles.countActive]}>
+            {repostsCount}
+          </Text>
         )}
       </Pressable>
 
       <View style={styles.spacer} />
 
-      {/* Views */}
       <View style={styles.item}>
-        <Ionicons name="eye-outline" size={iw(14)} color={Colors.muted} />
+        <Eye size={ICON_SIZE} color={Colors.muted} strokeWidth={STROKE} />
         {post.views_count > 0 && (
           <Text style={styles.count}>{post.views_count}</Text>
         )}
       </View>
 
-      {/* Menu */}
       <Pressable
         style={styles.item}
         onPress={(e) => {
@@ -116,10 +173,10 @@ export function PostActions({
         }}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons
-          name="ellipsis-horizontal"
-          size={iw(16)}
+        <MoreVertical
+          size={MENU_ICON_SIZE}
           color={Colors.muted}
+          strokeWidth={STROKE}
         />
       </Pressable>
     </View>
@@ -128,18 +185,57 @@ export function PostActions({
 
 const styles = StyleSheet.create({
   actions: {
+    marginTop: Layout.vertical.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: Layout.horizontal.md,
+    gap: Layout.horizontal.xxs,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
     gap: Layout.horizontal.xxs,
   },
+  iconBg: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    paddingVertical: Layout.vertical.xs,
+    paddingHorizontal: Layout.horizontal.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconBgActive: {
+    backgroundColor: "#FEE5CC",
+  },
+  likeDislikeGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    overflow: "hidden",
+    paddingVertical: Layout.vertical.xs,
+    paddingHorizontal: Layout.horizontal.sm,
+    gap: Layout.horizontal.xs,
+  },
+  likeDislikeGroupActive: {
+    backgroundColor: "#FEE5CC",
+  },
+  likeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dislikeBtn: {},
+  divider: {
+    width: 2,
+    height: Layout.vertical.smMd,
+    backgroundColor: Colors.muted,
+  },
+  dividerActive: {
+    backgroundColor: Colors.muted,
+  },
   count: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xxs,
+    marginLeft: Layout.horizontal.xxs,
+    fontFamily: Typography.fonts.dm.medium,
+    fontSize: Typography.sizes.xs,
     color: Colors.muted,
   },
   countActive: { color: Colors.primary },
