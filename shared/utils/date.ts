@@ -12,3 +12,19 @@ export function formatDate(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}h`;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+export function formatChatTime(dateStr: string | null): string {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "now";
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays < 7) return `${diffDays}d`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
