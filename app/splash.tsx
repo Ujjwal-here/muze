@@ -1,23 +1,16 @@
 import { Layout } from "@/constants/layout";
 import { Colors } from "@/constants/colors";
 import { iw } from "@/shared/utils/responsive";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Image, Animated, StyleSheet, StatusBar } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
 
+const MIN_SPLASH_MS = 2800;
+
 const SplashScreen: React.FC = () => {
   const { session, user, loading } = useAuth();
-
-  const sessionRef = useRef(session);
-  const userRef = useRef(user);
-  const loadingRef = useRef(loading);
-
-  useEffect(() => {
-    sessionRef.current = session;
-    userRef.current = user;
-    loadingRef.current = loading;
-  }, [session, user, loading]);
+  const [animDone, setAnimDone] = useState(false);
 
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -33,24 +26,6 @@ const SplashScreen: React.FC = () => {
   const ring2Scale = useRef(new Animated.Value(0.5)).current;
   const ring3Opacity = useRef(new Animated.Value(0)).current;
   const ring3Scale = useRef(new Animated.Value(0.5)).current;
-
-  const navigate = () => {
-    const s = sessionRef.current;
-    const u = userRef.current;
-
-    if (s && u) {
-      const onboardingDone = u.user_metadata?.onboarding_complete === true;
-      const hasName = !!u.user_metadata?.full_name;
-
-      if (onboardingDone && hasName) {
-        router.replace("/home");
-      } else {
-        router.replace("/onboarding");
-      }
-    } else {
-      router.replace("/login");
-    }
-  };
 
   useEffect(() => {
     const entranceAnim = Animated.parallel([
@@ -136,12 +111,6 @@ const SplashScreen: React.FC = () => {
       ]),
     );
 
-    const exitAnim = Animated.timing(bgOpacity, {
-      toValue: 0,
-      duration: 500,
-      useNativeDriver: true,
-    });
-
     Animated.sequence([
       entranceAnim,
       Animated.parallel([
@@ -150,13 +119,37 @@ const SplashScreen: React.FC = () => {
       ]),
     ]).start();
 
-    const exitTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       pulseLoop.stop();
-      exitAnim.start(() => navigate());
-    }, 2800);
+      setAnimDone(true);
+    }, MIN_SPLASH_MS);
 
-    return () => clearTimeout(exitTimer);
+    return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!animDone || loading) return;
+
+    const exitAnim = Animated.timing(bgOpacity, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    });
+
+    exitAnim.start(() => {
+      if (session && user) {
+        const onboardingDone = user.user_metadata?.onboarding_complete === true;
+        const hasName = !!user.user_metadata?.full_name;
+        if (onboardingDone && hasName) {
+          router.replace("/home");
+        } else {
+          router.replace("/onboarding");
+        }
+      } else {
+        router.replace("/login");
+      }
+    });
+  }, [animDone, loading, session, user]);
 
   const ringStyle = (opacity: Animated.Value, scale: Animated.Value) => ({
     ...styles.ring,
@@ -167,11 +160,9 @@ const SplashScreen: React.FC = () => {
   return (
     <Animated.View style={[styles.container, { opacity: bgOpacity }]}>
       <StatusBar hidden />
-
       <Animated.View style={ringStyle(ring1Opacity, ring1Scale)} />
       <Animated.View style={ringStyle(ring2Opacity, ring2Scale)} />
       <Animated.View style={ringStyle(ring3Opacity, ring3Scale)} />
-
       <Animated.View
         style={[
           styles.logoWrapper,
