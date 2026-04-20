@@ -1,10 +1,14 @@
 import { Tabs } from "expo-router";
 import { Home, MessageCircle } from "lucide-react-native";
+
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 export default function TabsLayout() {
+  const unreadCount = useUnreadCount();
+
   return (
     <Tabs
       screenOptions={{
@@ -19,7 +23,6 @@ export default function TabsLayout() {
           paddingBottom: Layout.vertical.sm,
           paddingTop: Layout.vertical.sm,
         },
-
         tabBarLabelStyle: {
           fontFamily: Typography.fonts.dm.medium,
           fontSize: Typography.sizes.xxs,
@@ -42,6 +45,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <MessageCircle size={size} color={color} strokeWidth={1.75} />
           ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
     </Tabs>
