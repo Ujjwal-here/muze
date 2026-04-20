@@ -15,7 +15,7 @@ const POST_SELECT = `
     id, username, full_name, avatar_url
   ),
   is_liked:post_reactions!left (
-    id
+    id, user_id
   )
 `;
 
@@ -31,9 +31,10 @@ const viewedPostIds = new Set<string>();
 function normalise(raw: any, userId?: string): PostWithMeta {
   if (!raw) return raw;
 
-  const isLiked = Array.isArray(raw.is_liked)
-    ? raw.is_liked.length > 0
-    : !!raw.is_liked;
+  const reactions = Array.isArray(raw.is_liked) ? raw.is_liked : [];
+  const isLiked = userId
+    ? reactions.some((r: any) => r.user_id === userId)
+    : reactions.length > 0;
 
   // Supabase returns to-one joins as arrays — unwrap safely
   const author = Array.isArray(raw.author)
