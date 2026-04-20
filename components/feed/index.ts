@@ -7,4 +7,6 @@ export { PostActions } from "./PostActions";
 export { PostCard } from "./PostCard";
 export { FeedTopBar } from "./FeedTopBar";
 export { FeedEmptyState } from "./FeedEmptyState";
+export { QuotePreviewCard } from "./QuotePreviewCard";
+export { OriginalPostCard } from "./OriginalPostCard";
 export type { FeedTab } from "./FeedTopBar";
