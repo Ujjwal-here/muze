@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Pencil } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
@@ -23,7 +23,7 @@ import type { FeedTab } from "@/components/feed";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 
 export default function HomeScreen() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTab>("Following");
   const [posts, setPosts] = useState<PostWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,9 +57,21 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
+    if (authLoading) return;
     fadeAnim.setValue(0);
     loadPosts();
-  }, [loadPosts]);
+  }, [authLoading, loadPosts]);
+
+  const didInitialFocusRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!didInitialFocusRef.current) {
+        didInitialFocusRef.current = true;
+        return;
+      }
+      loadPosts(true);
+    }, [loadPosts]),
+  );
 
   const handleLikeChange = (postId: string, liked: boolean, count: number) => {
     setPosts((prev) =>
@@ -77,7 +89,7 @@ export default function HomeScreen() {
     <ScreenWrapper scrollable={false} style={styles.root}>
       <FeedTopBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {loading ? (
+      {loading || authLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
@@ -118,6 +130,9 @@ export default function HomeScreen() {
 
             <View style={styles.endOfFeed}>
               <Text style={styles.endOfFeedTxt}>You're all caught up</Text>
+              <Pressable onPress={signOut} style={styles.logoutBtn}>
+                <Text style={styles.logoutTxt}>Log out</Text>
+              </Pressable>
             </View>
           </ScrollView>
         </Animated.View>
@@ -148,10 +163,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.horizontal.lg,
   },
   retryBtn: {
-    paddingHorizontal: iw(20),
+    paddingHorizontal: Layout.horizontal.sm,
     paddingVertical: 8,
     backgroundColor: Colors.primary,
-    borderRadius: iw(20),
+    borderRadius: 20,
   },
   retryTxt: {
     fontFamily: Typography.fonts.dm.semibold,
@@ -161,9 +176,22 @@ const styles = StyleSheet.create({
   endOfFeed: {
     alignItems: "center",
     paddingVertical: Layout.vertical["3xl"],
+    gap: Layout.vertical.sm,
   },
   endOfFeedTxt: {
     fontFamily: Typography.fonts.dm.regular,
+    fontSize: Typography.sizes.xs,
+    color: Colors.muted,
+  },
+  logoutBtn: {
+    paddingHorizontal: Layout.horizontal.sm,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  logoutTxt: {
+    fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
     color: Colors.muted,
   },
@@ -173,7 +201,7 @@ const styles = StyleSheet.create({
     right: Layout.horizontal.lg,
     width: iw(50),
     height: iw(50),
-    borderRadius: iw(25),
+    borderRadius: 999,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
