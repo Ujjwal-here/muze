@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, {
   createContext,
   useContext,
@@ -48,19 +49,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       supabase.realtime.setAuth(session?.access_token ?? null);
 
       if (session) {
         setUser(session.user);
 
-        try {
-          const { data, error } = await supabase.auth.getUser();
-          if (!error && data.user) {
-            setUser(data.user);
-          }
-        } catch {}
+        if (event !== "TOKEN_REFRESHED") {
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            if (!error && data.user) {
+              setUser(data.user);
+            }
+          } catch {}
+        }
       } else {
         setUser(null);
       }
@@ -73,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    router.replace("/");
   };
 
   return (
