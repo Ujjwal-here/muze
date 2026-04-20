@@ -1,85 +1,49 @@
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, X, ImageIcon, PlayCircle } from "lucide-react-native";
+import { ArrowLeft } from "lucide-react-native";
 import { router } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
 import { toast } from "sonner-native";
 import { Colors } from "@/constants/colors";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw, ih } from "@/shared/utils/responsive";
 import { useAuth } from "@/context/auth";
-import { supabase } from "@/shared/lib/supabase";
 import { createPost } from "@/shared/services/posts";
+import { uploadToBucket } from "@/shared/services/upload";
+import { useImagePicker, type PickedImage } from "@/hooks/useImagePicker";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { CharCount } from "@/components/common/CharCount";
+import {
+  MentionInput,
+  type MentionInputHandle,
+} from "@/components/common/MentionInput";
+import { MediaPreview, PostToolbar } from "@/components/create-post";
 
 const MAX_CHARS = 3000;
-const STORAGE_BUCKET = "post-media";
 const PLACEHOLDER =
   "Share something that inspires your followers, drop a laugh-out-loud meme, or ignite a bold debate in your community...";
-
-type MediaItem = {
-  uri: string;
-  type: "image";
-  fileName?: string;
-  mimeType?: string;
-};
 
 export default function CreatePostScreen() {
   const { user } = useAuth();
   const [content, setContent] = useState("");
   const [posting, setPosting] = useState(false);
-  const [media, setMedia] = useState<MediaItem | null>(null);
-  const inputRef = useRef<TextInput>(null);
+  const [media, setMedia] = useState<PickedImage | null>(null);
+  const inputRef = useRef<MentionInputHandle>(null);
+  const pickImage = useImagePicker();
 
   const charCount = content.length;
   const isOverLimit = charCount > MAX_CHARS;
   const canPost =
     (content.trim().length > 0 || media !== null) && !isOverLimit && !posting;
-
-  const uploadMedia = async (item: MediaItem): Promise<string> => {
-    const ext =
-      item.uri.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
-    const filePath = `${user!.id}/${Date.now()}.${ext}`;
-    const contentType =
-      item.mimeType || `image/${ext === "jpg" ? "jpeg" : ext}`;
-
-    const { data: signedData, error: signedError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .createSignedUploadUrl(filePath);
-
-    if (signedError) throw signedError;
-
-    const fileResponse = await fetch(item.uri);
-    const blob = await fileResponse.blob();
-
-    const uploadResponse = await fetch(signedData.signedUrl, {
-      method: "PUT",
-      headers: { "Content-Type": contentType, "x-upsert": "false" },
-      body: blob,
-    });
-
-    if (!uploadResponse.ok) {
-      const text = await uploadResponse.text();
-      throw new Error(`Upload failed: ${text}`);
-    }
-
-    const { data } = supabase.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(filePath);
-    return data.publicUrl;
-  };
 
   const handlePost = async () => {
     if (!canPost || !user) return;
@@ -87,7 +51,9 @@ export default function CreatePostScreen() {
     try {
       let mediaUrls: string[] = [];
       if (media) {
-        const publicUrl = await uploadMedia(media);
+        const publicUrl = await uploadToBucket(media.uri, user.id, {
+          mimeType: media.mimeType,
+        });
         mediaUrls = [publicUrl];
       }
       await createPost(user.id, {
@@ -103,25 +69,8 @@ export default function CreatePostScreen() {
   };
 
   const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      toast.error("Please allow access to your photo library to attach media.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
-      setMedia({
-        uri: asset.uri,
-        type: "image",
-        fileName: asset.fileName ?? "image.jpg",
-        mimeType: asset.mimeType ?? "image/jpeg",
-      });
-    }
+    const picked = await pickImage({ allowsEditing: true });
+    if (picked) setMedia(picked);
   };
 
   return (
@@ -144,76 +93,38 @@ export default function CreatePostScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <TextInput
+          <MentionInput
             ref={inputRef}
-            style={styles.input}
+            value={content}
+            onChangeText={setContent}
             placeholder={PLACEHOLDER}
             placeholderTextColor={Colors.placeholder}
             multiline
             autoFocus
-            value={content}
-            onChangeText={setContent}
             textAlignVertical="top"
+            inputStyle={styles.input}
+            suggestionAnchor="below"
           />
 
           {media && (
-            <View style={styles.mediaCard}>
-              <Pressable
-                style={styles.mediaClose}
-                onPress={() => setMedia(null)}
-                hitSlop={8}
-              >
-                <X size={iw(14)} color={Colors.black} strokeWidth={1.75} />
-              </Pressable>
-              <Image
-                source={{ uri: media.uri }}
-                style={styles.mediaThumb}
-                resizeMode="cover"
-              />
-            </View>
+            <MediaPreview uri={media.uri} onRemove={() => setMedia(null)} />
           )}
         </ScrollView>
 
         <View style={styles.footer}>
-          <Text style={[styles.charCount, isOverLimit && styles.charCountOver]}>
-            {charCount} / {MAX_CHARS} Char
-          </Text>
-
-          <View style={styles.toolbarRow}>
-            <Pressable
-              style={[styles.toolBtn, !!media && styles.toolBtnDisabled]}
-              onPress={handlePickImage}
-              disabled={!!media || posting}
-            >
-              <ImageIcon
-                size={iw(18)}
-                color={media ? Colors.placeholder : Colors.muted}
-                strokeWidth={1.75}
-              />
-            </Pressable>
-            <Pressable
-              style={[styles.toolBtn, styles.toolBtnDisabled]}
-              disabled
-            >
-              <PlayCircle
-                size={iw(18)}
-                color={Colors.placeholder}
-                strokeWidth={1.75}
-              />
-            </Pressable>
-          </View>
-
-          <Pressable
-            style={[styles.postBtn, !canPost && styles.postBtnDisabled]}
+          <CharCount count={charCount} max={MAX_CHARS} />
+          <PostToolbar
+            onPickImage={handlePickImage}
+            imagePicked={!!media}
+            disabled={posting}
+          />
+          <PrimaryButton
+            label="Post"
+            loadingLabel="Uploading..."
             onPress={handlePost}
+            loading={posting}
             disabled={!canPost}
-          >
-            {posting ? (
-              <ActivityIndicator size="small" color={Colors.white} />
-            ) : (
-              <Text style={styles.postBtnTxt}>Post</Text>
-            )}
-          </Pressable>
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -231,7 +142,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Layout.horizontal.md,
-    paddingVertical: ih(12),
+    paddingVertical: Layout.vertical.sm,
   },
   backBtn: {
     width: iw(36),
@@ -254,77 +165,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.sm,
     color: Colors.black,
     lineHeight: Typography.sizes.sm * 1.5,
-    minHeight: ih(60),
+    minHeight: Layout.vertical["3xl"],
     padding: 0,
-  },
-  mediaCard: {
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: Colors.inputBg,
-    position: "relative",
-  },
-  mediaClose: {
-    position: "absolute",
-    top: Layout.vertical.sm,
-    right: Layout.horizontal.sm,
-    zIndex: 10,
-    width: iw(24),
-    height: iw(24),
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mediaThumb: {
-    width: "100%",
-    height: ih(220),
-    backgroundColor: Colors.border,
   },
   footer: {
     paddingHorizontal: Layout.horizontal.lg,
     paddingTop: Layout.vertical.sm,
     paddingBottom: Layout.vertical.md,
     gap: Layout.vertical.sm,
-  },
-  charCount: {
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-    textAlign: "center",
-  },
-  charCountOver: {
-    color: "#E53935",
-  },
-  toolbarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Layout.horizontal.sm,
-  },
-  toolBtn: {
-    width: iw(36),
-    height: iw(36),
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F2F2F2",
-  },
-  toolBtnDisabled: {
-    opacity: 0.5,
-  },
-  postBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 999,
-    paddingVertical: ih(14),
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  postBtnDisabled: {
-    opacity: 0.5,
-  },
-  postBtnTxt: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.sm,
-    color: Colors.white,
   },
 });
