@@ -23,19 +23,20 @@ export function PostHeader({ post, replyLabel }: Props) {
       <PostAvatar avatarUrl={post.author?.avatar_url} name={avatarName} />
       <View style={styles.meta}>
         <View style={styles.nameRow}>
-          <Text style={styles.username} numberOfLines={1}>
-            @{username}
-          </Text>
           {replyLabel ? (
             <Text
-              style={styles.replyLabel}
-              numberOfLines={2}
+              style={styles.inlineReplyRow}
+              numberOfLines={1}
               ellipsizeMode="tail"
             >
-              {replyLabel}
+              <Text style={styles.username}>@{username}</Text>
+              <Text style={styles.replyLabel}> {replyLabel}</Text>
             </Text>
           ) : (
             <>
+              <Text style={styles.username} numberOfLines={1}>
+                @{username}
+              </Text>
               <Text style={styles.dot}>&middot;</Text>
               <Text style={styles.displayName} numberOfLines={1}>
                 {displayName}
@@ -65,10 +66,16 @@ const styles = StyleSheet.create({
   nameRow: {
     flex: 1,
     flexDirection: "row",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
+    alignItems: "center",
     gap: Layout.horizontal.xxs,
     minWidth: 0,
+  },
+  inlineReplyRow: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: Typography.fonts.dm.regular,
+    fontSize: Typography.sizes.xs,
+    color: Colors.muted,
   },
   username: {
     fontFamily: Typography.fonts.dm.semibold,
@@ -100,6 +107,5 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.xxs,
     color: Colors.muted,
     flexShrink: 0,
-    marginTop: 2,
   },
 });
