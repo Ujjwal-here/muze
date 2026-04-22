@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: Layout.vertical["2xl"],
     borderRadius: 999,
-    backgroundColor: "#F2F2F2",
+    backgroundColor: Colors.surfaceSubtle,
     paddingHorizontal: Layout.horizontal.sm,
   },
   searchIcon: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   addBtnPressed: {
-    backgroundColor: "#F2F2F2",
+    backgroundColor: Colors.surfaceSubtle,
   },
   emptyEnd: {
     alignItems: "center",
