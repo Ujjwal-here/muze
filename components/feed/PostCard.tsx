@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { View, Pressable, StyleSheet } from "react-native";
+import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
 import { Colors } from "@/constants/colors";
@@ -11,13 +12,10 @@ import {
   MediaRenderer,
   parseMediaUrls,
 } from "@/components/common/MediaRenderer";
+import { ExpandableMentionText } from "@/components/common/ExpandableMentionText";
 import { PostHeader } from "./PostHeader";
 import { PostActions } from "./PostActions";
-import { PostAvatar } from "./PostAvatar";
-import { formatDate } from "@/shared/utils/date";
-import { router } from "expo-router";
-
-const COLLAPSED_LINES = 4;
+import { OriginalPostCard } from "./OriginalPostCard";
 
 type Props = {
   post: PostWithMeta;
@@ -25,52 +23,6 @@ type Props = {
   onLikeChange: (postId: string, liked: boolean, count: number) => void;
   onDeleted: (postId: string) => void;
 };
-
-function OriginalPostCard({ original }: { original: PostWithMeta }) {
-  const displayName =
-    original.author?.full_name || original.author?.username || "Unknown";
-  const username = original.author?.username || "unknown";
-
-  const bodyText =
-    original.post_type === "quote" ? original.quote_content : original.content;
-
-  return (
-    <View style={inlineStyles.card}>
-      <View style={inlineStyles.header}>
-        <PostAvatar
-          avatarUrl={original.author?.avatar_url}
-          name={displayName}
-        />
-        <View style={inlineStyles.nameRow}>
-          <Text style={inlineStyles.username} numberOfLines={1}>
-            @{username}
-          </Text>
-          <Text style={inlineStyles.dot}>·</Text>
-          <Text style={inlineStyles.displayName} numberOfLines={1}>
-            {displayName}
-          </Text>
-        </View>
-        <Text style={inlineStyles.date}>{formatDate(original.created_at)}</Text>
-      </View>
-
-      {!!bodyText && (
-        <Text style={inlineStyles.content} numberOfLines={4}>
-          {bodyText}
-        </Text>
-      )}
-
-      {parseMediaUrls(original.media_urls).length > 0 && (
-        <View style={inlineStyles.mediaWrap}>
-          <MediaRenderer
-            urls={original.media_urls}
-            height={200}
-            borderRadius={8}
-          />
-        </View>
-      )}
-    </View>
-  );
-}
 
 export function PostCard({
   post,
@@ -85,19 +37,26 @@ export function PostCard({
   const [menuVisible, setMenuVisible] = useState(false);
   const [repostSheetVisible, setRepostSheetVisible] = useState(false);
   const [reposted, setReposted] = useState(post.is_reposted);
-  const [repostsCount, setRepostsCount] = useState(post.reposts_count);
-  const [expanded, setExpanded] = useState(false);
-  const [isTruncated, setIsTruncated] = useState(false);
-  const [truncatedText, setTruncatedText] = useState("");
+  // Combined reposts + quotes is what the UI shows on the repost button;
+  // the server columns stay separate.
+  const [repostsCount, setRepostsCount] = useState(
+    post.reposts_count + post.quotes_count,
+  );
 
   useEffect(() => {
     setLiked(post.is_liked);
     setLikesCount(post.likes_count);
     setReposted(post.is_reposted);
-    setRepostsCount(post.reposts_count);
-  }, [post.is_liked, post.likes_count, post.is_reposted, post.reposts_count]);
+    setRepostsCount(post.reposts_count + post.quotes_count);
+  }, [
+    post.is_liked,
+    post.likes_count,
+    post.is_reposted,
+    post.reposts_count,
+    post.quotes_count,
+  ]);
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (liking) return;
     setLiking(true);
     if (disliked) setDisliked(false);
@@ -116,24 +75,24 @@ export function PostCard({
     } finally {
       setLiking(false);
     }
-  };
+  }, [liking, liked, disliked, likesCount, post.id, onLikeChange]);
 
-  const handleDislike = () => {
+  const handleDislike = useCallback(() => {
     if (liked) {
       setLiked(false);
       setLikesCount((c) => Math.max(0, c - 1));
     }
     setDisliked((d) => !d);
-  };
+  }, [liked]);
 
-  const handleRepostChange = (newReposted: boolean) => {
+  const handleRepostChange = useCallback((newReposted: boolean) => {
     setReposted(newReposted);
     setRepostsCount((c) => (newReposted ? c + 1 : Math.max(0, c - 1)));
-  };
+  }, []);
 
-  const handleQuote = () => {
+  const handleQuote = useCallback(() => {
     router.push({ pathname: "/quote_post", params: { postId: post.id } });
-  };
+  }, [post.id]);
 
   const isRepost = post.post_type === "repost";
   const isQuote = post.post_type === "quote";
@@ -163,53 +122,11 @@ export function PostCard({
         />
 
         {!!bodyText && (
-          <View>
-            <Text
-              style={[styles.content, styles.hiddenText]}
-              onTextLayout={(e) => {
-                const lines = e.nativeEvent.lines;
-                if (lines.length > COLLAPSED_LINES) {
-                  setIsTruncated(true);
-                  setTruncatedText(
-                    lines
-                      .slice(0, COLLAPSED_LINES)
-                      .map((l) => l.text)
-                      .join("")
-                      .trimEnd(),
-                  );
-                }
-              }}
-            >
-              {bodyText}
-            </Text>
-            {!expanded && isTruncated ? (
-              <Text style={styles.content}>
-                {truncatedText}
-                <Text
-                  style={styles.more}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    setExpanded(true);
-                  }}
-                >
-                  {" "}
-                  ...more
-                </Text>
-              </Text>
-            ) : (
-              <Text style={styles.content}>{bodyText}</Text>
-            )}
-            {isTruncated && expanded && (
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setExpanded(false);
-                }}
-              >
-                <Text style={styles.toggle}>Show less</Text>
-              </Pressable>
-            )}
-          </View>
+          <ExpandableMentionText
+            text={bodyText}
+            style={styles.content}
+            mentionStyle={styles.mention}
+          />
         )}
 
         {parseMediaUrls(displayPost.media_urls).length > 0 && (
@@ -270,79 +187,12 @@ const styles = StyleSheet.create({
     color: Colors.black,
     marginVertical: Layout.vertical.xs,
   },
-  hiddenText: {
-    position: "absolute",
-    opacity: 0,
-  },
-  more: {
+  mention: {
     fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  toggle: {
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-    marginBottom: Layout.vertical.xs,
   },
   mediaWrap: {
     borderRadius: 12,
     overflow: "hidden",
     backgroundColor: Colors.white,
-  },
-});
-
-const inlineStyles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    padding: Layout.horizontal.sm,
-    marginBottom: Layout.vertical.sm,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  nameRow: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    minWidth: 0,
-  },
-  username: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-    flexShrink: 1,
-  },
-  dot: {
-    color: Colors.muted,
-    fontSize: Typography.sizes.xs,
-  },
-  displayName: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-    flexShrink: 1,
-  },
-  date: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
-    marginLeft: 8,
-  },
-  content: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-    lineHeight: Typography.sizes.xs * 1.5,
-    marginTop: Layout.vertical.xs,
-  },
-  mediaWrap: {
-    marginTop: Layout.vertical.sm,
-    borderRadius: 8,
-    overflow: "hidden",
   },
 });
