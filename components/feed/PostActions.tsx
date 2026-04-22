@@ -1,4 +1,11 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  GestureResponderEvent,
+} from "react-native";
 import {
   CornerUpLeft,
   ThumbsUp,
@@ -31,6 +38,33 @@ const ICON_SIZE = iw(15);
 const MENU_ICON_SIZE = iw(16);
 const STROKE = 1.75;
 
+const stop = (e: GestureResponderEvent) => e.stopPropagation();
+
+function PillIcon({
+  Icon,
+  count,
+  onPress,
+}: {
+  Icon: React.ComponentType<any>;
+  count: number;
+  onPress?: (e: GestureResponderEvent) => void;
+}) {
+  return (
+    <Pressable
+      style={styles.item}
+      onPress={(e) => {
+        stop(e);
+        onPress?.(e);
+      }}
+    >
+      <View style={styles.iconBg}>
+        <Icon size={ICON_SIZE} color={Colors.muted} strokeWidth={STROKE} />
+      </View>
+      {count > 0 && <Text style={styles.count}>{count}</Text>}
+    </Pressable>
+  );
+}
+
 export function PostActions({
   post,
   liked,
@@ -43,34 +77,17 @@ export function PostActions({
   onMenuOpen,
   onRepostPress,
 }: Props) {
-  const stop = (e: any) => e.stopPropagation();
+  const groupActive = liked || disliked;
 
   return (
     <View style={styles.actions}>
-      {/* Reply */}
-      <Pressable
-        style={styles.item}
-        onPress={(e) => {
-          stop(e);
-        }}
-      >
-        <View style={styles.iconBg}>
-          <CornerUpLeft
-            size={ICON_SIZE}
-            color={Colors.muted}
-            strokeWidth={STROKE}
-          />
-        </View>
-        {post.comments_count > 0 && (
-          <Text style={styles.count}>{post.comments_count}</Text>
-        )}
-      </Pressable>
+      <PillIcon Icon={CornerUpLeft} count={post.comments_count} />
 
       <View style={styles.item}>
         <View
           style={[
             styles.likeDislikeGroup,
-            (liked || disliked) && styles.likeDislikeGroupActive,
+            groupActive && styles.likeDislikeGroupActive,
           ]}
         >
           <Pressable
@@ -93,15 +110,9 @@ export function PostActions({
             )}
           </Pressable>
 
-          <View
-            style={[
-              styles.divider,
-              (liked || disliked) && styles.dividerActive,
-            ]}
-          />
+          <View style={styles.divider} />
 
           <Pressable
-            style={styles.dislikeBtn}
             onPress={(e) => {
               stop(e);
               onDislike();
@@ -117,23 +128,7 @@ export function PostActions({
         </View>
       </View>
 
-      <Pressable
-        style={styles.item}
-        onPress={(e) => {
-          stop(e);
-        }}
-      >
-        <View style={styles.iconBg}>
-          <MessageSquareMore
-            size={ICON_SIZE}
-            color={Colors.muted}
-            strokeWidth={STROKE}
-          />
-        </View>
-        {post.comments_count > 0 && (
-          <Text style={styles.count}>{post.comments_count}</Text>
-        )}
-      </Pressable>
+      <PillIcon Icon={MessageSquareMore} count={post.comments_count} />
 
       <Pressable
         style={styles.item}
@@ -142,18 +137,20 @@ export function PostActions({
           onRepostPress();
         }}
       >
-        <View style={[styles.iconBg, reposted && styles.iconBgActive]}>
+        <View
+          style={[styles.iconWithCount, reposted && styles.iconWithCountActive]}
+        >
           <Repeat
             size={ICON_SIZE}
             color={reposted ? Colors.primary : Colors.muted}
             strokeWidth={STROKE}
           />
+          {repostsCount > 0 && (
+            <Text style={[styles.inlineCount, reposted && styles.countActive]}>
+              {repostsCount}
+            </Text>
+          )}
         </View>
-        {repostsCount > 0 && (
-          <Text style={[styles.count, reposted && styles.countActive]}>
-            {repostsCount}
-          </Text>
-        )}
       </Pressable>
 
       <View style={styles.spacer} />
@@ -171,7 +168,7 @@ export function PostActions({
           stop(e);
           onMenuOpen();
         }}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        hitSlop={8}
       >
         <MoreVertical
           size={MENU_ICON_SIZE}
@@ -196,20 +193,34 @@ const styles = StyleSheet.create({
     gap: Layout.horizontal.xxs,
   },
   iconBg: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 20,
     paddingVertical: Layout.vertical.xs,
     paddingHorizontal: Layout.horizontal.sm,
     alignItems: "center",
     justifyContent: "center",
   },
-  iconBgActive: {
-    backgroundColor: "#FEE5CC",
+  iconWithCount: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: 20,
+    paddingVertical: Layout.vertical.xs,
+    paddingHorizontal: Layout.horizontal.sm,
+    gap: Layout.horizontal.xxs,
+  },
+  iconWithCountActive: {
+    backgroundColor: Colors.primaryTintStrong,
+  },
+  inlineCount: {
+    fontFamily: Typography.fonts.dm.medium,
+    fontSize: Typography.sizes.xs,
+    color: Colors.muted,
   },
   likeDislikeGroup: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 20,
     overflow: "hidden",
     paddingVertical: Layout.vertical.xs,
@@ -217,19 +228,15 @@ const styles = StyleSheet.create({
     gap: Layout.horizontal.xs,
   },
   likeDislikeGroupActive: {
-    backgroundColor: "#FEE5CC",
+    backgroundColor: Colors.primaryTintStrong,
   },
   likeBtn: {
     flexDirection: "row",
     alignItems: "center",
   },
-  dislikeBtn: {},
   divider: {
     width: 2,
     height: Layout.vertical.smMd,
-    backgroundColor: Colors.muted,
-  },
-  dividerActive: {
     backgroundColor: Colors.muted,
   },
   count: {
