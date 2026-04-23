@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Image as ImageIcon, Link2 } from "lucide-react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { iw } from "@/shared/utils/responsive";
 import type { InboxItem } from "@/shared/types/chat";
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function MessagePreview({ convo, unread }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const type = convo.last_message_type;
   const meta = convo.last_message_metadata;
   const textStyle = [styles.text, unread && styles.textUnread];
@@ -34,7 +37,7 @@ export function MessagePreview({ convo, unread }: Props) {
       <View style={styles.row}>
         <ImageIcon
           size={iw(14)}
-          color={unread ? Colors.black : Colors.muted}
+          color={unread ? colors.black : colors.muted}
           strokeWidth={1.75}
         />
         <Text style={textStyle} numberOfLines={1}>
@@ -49,7 +52,7 @@ export function MessagePreview({ convo, unread }: Props) {
       <View style={styles.row}>
         <Link2
           size={iw(14)}
-          color={unread ? Colors.black : Colors.muted}
+          color={unread ? colors.black : colors.muted}
           strokeWidth={1.75}
         />
         <Text style={textStyle} numberOfLines={1}>
@@ -66,19 +69,20 @@ export function MessagePreview({ convo, unread }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.sm,
-  },
-  text: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  textUnread: {
-    color: Colors.black,
-    fontFamily: Typography.fonts.dm.semibold,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Layout.horizontal.xs,
+    },
+    text: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    textUnread: {
+      color: colors.black,
+      fontFamily: Typography.fonts.dm.semibold,
+    },
+  });

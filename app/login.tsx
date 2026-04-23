@@ -1,18 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, StyleSheet, Animated, Image } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { supabase } from "@/shared/lib/supabase";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { FormField } from "@/components/ui/FormField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { ThemeToggleButton } from "@/components/ui/ThemeToggleButton";
 import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
 import { toast } from "sonner-native";
 
 export default function LoginScreen() {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -40,11 +44,14 @@ export default function LoginScreen() {
 
   return (
     <ScreenWrapper>
+      <View style={styles.topRight}>
+        <ThemeToggleButton size={32} />
+      </View>
       <View style={styles.inner}>
         <Animated.View style={[styles.logoWrap, animStyle(logoAnim, 20)]}>
           <Image
             source={require("@/assets/images/muze-logo.png")}
-            style={styles.logo}
+            style={[styles.logo, { tintColor: colors.logoTint }]}
             resizeMode="contain"
           />
         </Animated.View>
@@ -81,36 +88,43 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  inner: {
-    flex: 1,
-    paddingHorizontal: Layout.horizontal.lg,
-    justifyContent: "center",
-  },
-  logoWrap: {
-    alignItems: "center",
-    marginBottom: Layout.vertical.md,
-  },
-  logo: {
-    width: iw(70),
-    height: iw(70),
-  },
-  title: {
-    fontFamily: Typography.fonts.cabin.bold,
-    fontSize: Typography.sizes.xl,
-    color: Colors.black,
-    textAlign: "center",
-    marginBottom: Layout.vertical.md,
-  },
-  subtitle: {
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.sm,
-    color: Colors.black,
-    textAlign: "center",
-    lineHeight: Typography.sizes.sm * 1.6,
-    marginBottom: Layout.vertical["3xl"],
-  },
-  field: {
-    marginBottom: Layout.vertical.lg,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    inner: {
+      flex: 1,
+      paddingHorizontal: Layout.horizontal.lg,
+      justifyContent: "center",
+    },
+    logoWrap: {
+      alignItems: "center",
+      marginBottom: Layout.vertical.md,
+    },
+    logo: {
+      width: iw(70),
+      height: iw(70),
+    },
+    title: {
+      fontFamily: Typography.fonts.cabin.bold,
+      fontSize: Typography.sizes.xl,
+      color: colors.black,
+      textAlign: "center",
+      marginBottom: Layout.vertical.md,
+    },
+    subtitle: {
+      fontFamily: Typography.fonts.dm.medium,
+      fontSize: Typography.sizes.sm,
+      color: colors.black,
+      textAlign: "center",
+      lineHeight: Typography.sizes.sm * 1.6,
+      marginBottom: Layout.vertical["3xl"],
+    },
+    field: {
+      marginBottom: Layout.vertical.lg,
+    },
+    topRight: {
+      position: "absolute",
+      top: Layout.vertical.md,
+      right: Layout.horizontal.lg,
+      zIndex: 10,
+    },
+  });

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, StyleSheet } from "react-native";
 import * as Haptics from "expo-haptics";
 import { CornerUpLeft } from "lucide-react-native";
@@ -11,7 +11,8 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
 
@@ -31,6 +32,8 @@ export function SwipeableMessageRow({
   onSwipeReply,
   children,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const translateX = useSharedValue(0);
   const didCrossHaptic = useSharedValue(false);
 
@@ -103,7 +106,7 @@ export function SwipeableMessageRow({
         >
           <CornerUpLeft
             size={iw(18)}
-            color={Colors.primary}
+            color={colors.primary}
             strokeWidth={2.25}
           />
         </Animated.View>
@@ -113,7 +116,8 @@ export function SwipeableMessageRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   wrap: {
     position: "relative",
     maxWidth: "75%",

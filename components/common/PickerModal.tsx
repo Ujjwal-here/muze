@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Modal,
   View,
@@ -8,7 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -30,6 +31,8 @@ export function PickerModal({
   onSelect,
   onClose,
 }: PickerModalProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Modal
       visible={visible}
@@ -42,38 +45,35 @@ export function PickerModal({
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <Pressable onPress={onClose}>
-              <Ionicons name="close" size={iw(20)} color={Colors.muted} />
+              <Ionicons name="close" size={iw(20)} color={colors.muted} />
             </Pressable>
           </View>
           <FlatList
             data={data}
             keyExtractor={(item) => item}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Pressable
-                style={[
-                  styles.item,
-                  selectedValue === item && styles.itemSelected,
-                ]}
-                onPress={() => onSelect(item)}
-              >
-                <Text
-                  style={[
-                    styles.itemText,
-                    selectedValue === item && styles.itemTextSelected,
-                  ]}
+            renderItem={({ item }) => {
+              const selected = selectedValue === item;
+              return (
+                <Pressable
+                  style={[styles.item, selected && styles.itemSelected]}
+                  onPress={() => onSelect(item)}
                 >
-                  {item}
-                </Text>
-                {selectedValue === item && (
-                  <Ionicons
-                    name="checkmark"
-                    size={iw(18)}
-                    color={Colors.primary}
-                  />
-                )}
-              </Pressable>
-            )}
+                  <Text
+                    style={[styles.itemText, selected && styles.itemTextSelected]}
+                  >
+                    {item}
+                  </Text>
+                  {selected && (
+                    <Ionicons
+                      name="checkmark"
+                      size={iw(18)}
+                      color={colors.primary}
+                    />
+                  )}
+                </Pressable>
+              );
+            }}
           />
         </Pressable>
       </Pressable>
@@ -81,14 +81,15 @@ export function PickerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: colors.overlayModalDark,
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "50%",
@@ -101,12 +102,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.horizontal.lg,
     paddingVertical: Layout.vertical.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.base,
-    color: Colors.black,
+    color: colors.black,
   },
   item: {
     paddingVertical: Layout.vertical.md,
@@ -116,15 +117,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   itemSelected: {
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
   },
   itemText: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.label,
+    color: colors.label,
   },
   itemTextSelected: {
     fontFamily: Typography.fonts.dm.semibold,
-    color: Colors.black,
+    color: colors.black,
   },
 });

@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { View, TextInput, StyleSheet } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -19,6 +20,8 @@ export function OtpCodeInput({
   onChange,
   autoFocus = true,
 }: OtpCodeInputProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export function OtpCodeInput({
           maxLength={1}
           selectTextOnFocus
           autoComplete="one-time-code"
-          cursorColor={Colors.black}
+          cursorColor={colors.black}
           textAlign="center"
           textAlignVertical="center"
         />
@@ -86,7 +89,8 @@ export function OtpCodeInput({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "center",
@@ -97,15 +101,15 @@ const styles = StyleSheet.create({
     width: INPUT_SIZE,
     height: INPUT_SIZE,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 10,
     textAlign: "center",
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xl,
-    color: Colors.black,
+    color: colors.black,
   },
   cellFilled: {
-    borderColor: Colors.divider,
-    backgroundColor: Colors.white,
+    borderColor: colors.divider,
+    backgroundColor: colors.white,
   },
 });

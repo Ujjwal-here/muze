@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { Repeat2, Quote } from "lucide-react-native";
 import { toast } from "sonner-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw, ih } from "@/shared/utils/responsive";
@@ -34,6 +35,8 @@ export function RepostSheet({
   onRepostChange,
   onQuote,
 }: RepostSheetProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [loading, setLoading] = useState(false);
 
   const handleRepost = async () => {
@@ -82,12 +85,12 @@ export function RepostSheet({
           {loading ? (
             <ActivityIndicator
               size="small"
-              color={isReposted ? Colors.primary : Colors.muted}
+              color={isReposted ? colors.primary : colors.muted}
             />
           ) : (
             <Repeat2
               size={iw(18)}
-              color={isReposted ? Colors.primary : Colors.muted}
+              color={isReposted ? colors.primary : colors.muted}
               strokeWidth={1.75}
             />
           )}
@@ -100,7 +103,7 @@ export function RepostSheet({
           style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
           onPress={handleQuote}
         >
-          <Quote size={iw(18)} color={Colors.muted} strokeWidth={1.75} />
+          <Quote size={iw(18)} color={colors.muted} strokeWidth={1.75} />
           <Text style={styles.label}>Repost with Quote</Text>
         </Pressable>
       </View>
@@ -108,17 +111,18 @@ export function RepostSheet({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: colors.overlayModal,
   },
   sheet: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderTopLeftRadius: iw(20),
     borderTopRightRadius: iw(20),
     paddingTop: ih(10),
@@ -129,7 +133,7 @@ const styles = StyleSheet.create({
     width: iw(36),
     height: ih(4),
     borderRadius: iw(2),
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignSelf: "center",
     marginBottom: ih(12),
   },
@@ -142,14 +146,14 @@ const styles = StyleSheet.create({
     borderRadius: iw(8),
   },
   itemPressed: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
   },
   label: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
   },
   labelActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

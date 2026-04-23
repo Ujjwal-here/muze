@@ -13,13 +13,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { toast } from "sonner-native";
 import { Layout } from "@/constants/layout";
 import { ih } from "@/shared/utils/responsive";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth";
 import { supabase } from "@/shared/lib/supabase";
 import {
@@ -27,7 +27,6 @@ import {
   sendMessage,
   subscribeToMessages,
   markAsRead,
-  getLastReadAt,
 } from "@/shared/services/chat";
 import { uploadToBucket } from "@/shared/services/upload";
 import type { Message, ReplySnapshot } from "@/shared/types/chat";
@@ -49,9 +48,10 @@ import {
 const PAGE_SIZE = 50;
 
 export default function ChatScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     conversationId: string;
     otherUserId: string;
@@ -79,36 +79,13 @@ export default function ChatScreen() {
   const pickImage = useImagePicker();
 
   const flatListRef = useRef<FlatList>(null);
-  const shouldScrollToEndRef = useRef(false);
 
   const loadMessages = useCallback(async () => {
     if (!conversationId || !user) return;
     try {
-      // Capture last_read_at BEFORE markAsRead runs so the first-unread
-      // anchor is still valid for initial scroll positioning.
-      const [msgs, lastReadAt] = await Promise.all([
-        fetchMessages(conversationId),
-        getLastReadAt(conversationId, user.id),
-      ]);
-
-      let firstUnread = -1;
-      if (lastReadAt) {
-        const lastReadMs = new Date(lastReadAt).getTime();
-        for (let i = 0; i < msgs.length; i++) {
-          const m = msgs[i];
-          if (m.sender_id === user.id) continue;
-          if (new Date(m.created_at).getTime() > lastReadMs) {
-            firstUnread = i;
-            break;
-          }
-        }
-      }
-
-      shouldScrollToEndRef.current = firstUnread === -1;
-
+      const msgs = await fetchMessages(conversationId);
       setMessages(msgs);
       if (msgs.length < PAGE_SIZE) setHasMore(false);
-
       markAsRead(conversationId, user.id).catch(() => {});
     } catch (err) {
       console.error("Failed to load messages:", err);
@@ -137,13 +114,7 @@ export default function ChatScreen() {
     if (!conversationId) return;
 
     const unsubscribe = subscribeToMessages(conversationId, (newMsg) => {
-      setMessages((prev) => {
-        const next = reconcile(prev, newMsg);
-        if (next !== prev && next.length > prev.length) {
-          shouldScrollToEndRef.current = true;
-        }
-        return next;
-      });
+      setMessages((prev) => reconcile(prev, newMsg));
       if (user && conversationId) {
         markAsRead(conversationId, user.id).catch(() => {});
       }
@@ -162,7 +133,6 @@ export default function ChatScreen() {
       const olderMsgs = await fetchMessages(conversationId, PAGE_SIZE, oldest);
       if (olderMsgs.length < PAGE_SIZE) setHasMore(false);
       if (olderMsgs.length > 0) {
-        shouldScrollToEndRef.current = false;
         setMessages((prev) => [...olderMsgs, ...prev]);
       }
     } catch (err) {
@@ -220,7 +190,6 @@ export default function ChatScreen() {
         url: imageForThisSend.uri,
         uploading: true,
       });
-      shouldScrollToEndRef.current = true;
       setMessages((prev) => [...prev, optimisticMsg]);
 
       try {
@@ -246,7 +215,6 @@ export default function ChatScreen() {
     }
 
     const optimisticMsg = makeOptimistic(text, "text", metadata);
-    shouldScrollToEndRef.current = true;
     setMessages((prev) => [...prev, optimisticMsg]);
 
     try {
@@ -326,6 +294,10 @@ export default function ChatScreen() {
         (index === messages.length - 1 ||
           messages[index + 1]?.sender_id !== item.sender_id);
       const isGrouped = isGroupedWithPrev(messages, index, showDate);
+      const showSenderBreak =
+        !showDate &&
+        index > 0 &&
+        messages[index - 1].sender_id !== item.sender_id;
       const showDelivered =
         isMe && index === lastSentByMeIndex && !item.id.startsWith("temp-");
       const canReply = !item.id.startsWith("temp-");
@@ -337,6 +309,7 @@ export default function ChatScreen() {
           showDate={showDate}
           showAvatar={showAvatar}
           isGrouped={isGrouped}
+          showSenderBreak={showSenderBreak}
           avatarInitial={avatarInitial}
           showDelivered={showDelivered}
           canReply={canReply}
@@ -349,21 +322,19 @@ export default function ChatScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, styles.center]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <ScreenWrapper scrollable={false} style={styles.root}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
-
+    <ScreenWrapper scrollable={false} style={styles.root}>
       <ChatHeader
-        displayName={displayName}
         username={otherUsername}
         avatarInitial={avatarInitial}
-        topInset={insets.top}
         onBack={handleBack}
       />
 
@@ -378,70 +349,87 @@ export default function ChatScreen() {
         }
         keyboardVerticalOffset={0}
       >
-        <FlatList
-          ref={flatListRef}
-          inverted
-          data={messages.slice().reverse()}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messagesList}
-          showsVerticalScrollIndicator={false}
-          onEndReached={loadOlderMessages}
-          onEndReachedThreshold={0.5}
-          keyboardShouldPersistTaps="handled"
-          ListFooterComponent={
-            loadingMore ? (
-              <ActivityIndicator
-                size="small"
-                color={Colors.primary}
-                style={styles.loadingMore}
+        <View style={styles.card}>
+          <FlatList
+            ref={flatListRef}
+            inverted
+            data={messages.slice().reverse()}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messagesList}
+            showsVerticalScrollIndicator={false}
+            onEndReached={loadOlderMessages}
+            onEndReachedThreshold={0.5}
+            keyboardShouldPersistTaps="handled"
+            ListFooterComponent={
+              loadingMore ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.primary}
+                  style={styles.loadingMore}
+                />
+              ) : null
+            }
+          />
+          {messages.length === 0 && (
+            <View style={styles.emptyOverlay} pointerEvents="box-none">
+              <ChatEmpty
+                avatarInitial={avatarInitial}
+                displayName={displayName}
+                username={otherUsername}
               />
-            ) : null
-          }
-          ListEmptyComponent={
-            <ChatEmpty
-              avatarInitial={avatarInitial}
-              displayName={displayName}
-              username={otherUsername}
-            />
-          }
-        />
+            </View>
+          )}
 
-        <ChatComposer
-          inputText={inputText}
-          onChangeText={setInputText}
-          pendingImage={pendingImage}
-          replyingTo={replyingTo}
-          sending={sending}
-          bottomPadding={isKeyboardOpen ? ih(8) : insets.bottom || ih(8)}
-          onSend={handleSend}
-          onPickImage={handlePickImage}
-          onPickGif={handlePickGif}
-          onCancelImage={() => setPendingImage(null)}
-          onCancelReply={() => setReplyingTo(null)}
-        />
+          <ChatComposer
+            inputText={inputText}
+            onChangeText={setInputText}
+            pendingImage={pendingImage}
+            replyingTo={replyingTo}
+            sending={sending}
+            bottomPadding={ih(8)}
+            onSend={handleSend}
+            onPickImage={handlePickImage}
+            onPickGif={handlePickGif}
+            onCancelImage={() => setPendingImage(null)}
+            onCancelReply={() => setReplyingTo(null)}
+          />
+        </View>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenWrapper>
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  flex1: {
-    flex: 1,
-  },
-  center: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  messagesList: {
-    paddingHorizontal: Layout.horizontal.md,
-    paddingVertical: Layout.vertical.md,
-  },
-  loadingMore: {
-    paddingVertical: Layout.vertical.md,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    root: { backgroundColor: colors.surfaceMuted },
+    card: {
+      flex: 1,
+      marginHorizontal: Layout.horizontal.sm,
+      marginTop: Layout.vertical.sm,
+      marginBottom: Layout.vertical.md,
+      backgroundColor: colors.background,
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    flex1: {
+      flex: 1,
+    },
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    messagesList: {
+      paddingHorizontal: Layout.horizontal.md,
+      paddingVertical: Layout.vertical.md,
+    },
+    loadingMore: {
+      paddingVertical: Layout.vertical.md,
+    },
+    emptyOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  });

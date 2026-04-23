@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Animated, Pressable } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { supabase } from "@/shared/lib/supabase";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
@@ -14,6 +15,8 @@ import { toast } from "sonner-native";
 const CODE_LENGTH = 6;
 
 export default function VerificationScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { email } = useLocalSearchParams<{ email: string }>();
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
@@ -89,7 +92,8 @@ export default function VerificationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   inner: {
     flex: 1,
     justifyContent: "space-between",
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Typography.fonts.cabin.bold,
     fontSize: Typography.sizes.lg,
-    color: Colors.black,
+    color: colors.black,
     textAlign: "center",
     marginBottom: Layout.vertical.md,
   },
@@ -112,7 +116,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.subtitle,
+    color: colors.subtitle,
     textAlign: "center",
     lineHeight: Typography.sizes.xs * 1.6,
   },
@@ -126,12 +130,12 @@ const styles = StyleSheet.create({
   emailTxt: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
   },
   changeTxt: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.primary,
+    color: colors.primary,
     textDecorationLine: "underline",
   },
   btnWrap: {

@@ -1,4 +1,3 @@
-// hooks/useUnreadCount.ts
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth";
 import { fetchInbox, subscribeToInbox } from "@/shared/services/chat";

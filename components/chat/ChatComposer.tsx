@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { ImageIcon, Send, X } from "lucide-react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -47,6 +48,8 @@ export function ChatComposer({
   onCancelImage,
   onCancelReply,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const canSend = (!!inputText.trim() || !!pendingImage) && !sending;
 
   return (
@@ -69,7 +72,7 @@ export function ChatComposer({
               hitSlop={10}
               style={styles.closeBtn}
             >
-              <X size={iw(18)} color={Colors.muted} strokeWidth={1.75} />
+              <X size={iw(18)} color={colors.muted} strokeWidth={1.75} />
             </Pressable>
           </View>
         )}
@@ -101,7 +104,7 @@ export function ChatComposer({
               hitSlop={10}
               style={styles.closeBtn}
             >
-              <X size={iw(18)} color={Colors.muted} strokeWidth={1.75} />
+              <X size={iw(18)} color={colors.muted} strokeWidth={1.75} />
             </Pressable>
           </View>
         )}
@@ -113,7 +116,7 @@ export function ChatComposer({
             onPress={onPickImage}
             disabled={sending}
           >
-            <ImageIcon size={iw(20)} color={Colors.muted} strokeWidth={1.75} />
+            <ImageIcon size={iw(20)} color={colors.muted} strokeWidth={1.75} />
           </Pressable>
 
           <Pressable style={styles.icon} hitSlop={8} onPress={onPickGif}>
@@ -123,14 +126,14 @@ export function ChatComposer({
           <TextInput
             style={styles.input}
             placeholder="Write your message here..."
-            placeholderTextColor={Colors.placeholder}
+            placeholderTextColor={colors.placeholder}
             value={inputText}
             onChangeText={onChangeText}
             multiline
             maxLength={2000}
             returnKeyType="default"
-            cursorColor={Colors.black}
-            selectionColor={Colors.black}
+            cursorColor={colors.black}
+            selectionColor={colors.black}
           />
 
           <Pressable
@@ -142,7 +145,7 @@ export function ChatComposer({
             <View style={{ transform: [{ rotate: "45deg" }] }}>
               <Send
                 size={iw(20)}
-                color={canSend ? Colors.primary : Colors.placeholder}
+                color={canSend ? colors.primary : colors.placeholder}
                 strokeWidth={1.75}
               />
             </View>
@@ -153,122 +156,123 @@ export function ChatComposer({
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: Layout.horizontal.md,
-    paddingTop: Layout.vertical.sm,
-    backgroundColor: Colors.white,
-    gap: Layout.horizontal.xs,
-  },
-  pill: {
-    flex: 1,
-    flexDirection: "column",
-    backgroundColor: Colors.surfaceSubtle,
-    borderRadius: 25,
-    overflow: "hidden",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Layout.horizontal.sm,
-    paddingVertical: Layout.vertical.xxs,
-    minHeight: Layout.vertical.lg,
-    gap: Layout.horizontal.xs,
-  },
-  icon: {
-    paddingVertical: Layout.vertical.xxs,
-    paddingHorizontal: Layout.horizontal.xxs,
-  },
-  gifLabel: {
-    fontFamily: Typography.fonts.dm.bold,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
-    letterSpacing: 0.3,
-  },
-  input: {
-    flex: 1,
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-    maxHeight: Layout.vertical["5xl"],
-    paddingVertical: 0,
-    paddingHorizontal: Layout.horizontal.xxs,
-  },
-  sendBtn: {
-    paddingVertical: Layout.vertical.sm,
-    paddingLeft: Layout.horizontal.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sendBtnDisabled: {
-    opacity: 0.6,
-  },
-  closeBtn: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  imageBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Layout.vertical.sm,
-    paddingHorizontal: Layout.horizontal.sm,
-    gap: Layout.horizontal.xs,
-  },
-  imageWrap: {
-    width: iw(40),
-    height: iw(40),
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  imageThumb: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: Colors.white,
-  },
-  imageLabel: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.label,
-  },
-  replyBar: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    backgroundColor: Colors.primaryTintSoft,
-    paddingRight: Layout.horizontal.md,
-    gap: Layout.horizontal.xs,
-  },
-  replyRail: {
-    width: 4,
-    marginLeft: Layout.horizontal.sm,
-    marginVertical: Layout.vertical.sm,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-  },
-  replyBody: {
-    flex: 1,
-    minWidth: 0,
-    paddingVertical: Layout.vertical.sm,
-  },
-  replyHandle: {
-    fontFamily: Typography.fonts.dm.bold,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.primary,
-  },
-  replyText: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.label,
-    marginTop: Layout.vertical.xxs,
-  },
-  replyThumb: {
-    width: iw(28),
-    height: iw(28),
-    borderRadius: 5,
-    marginTop: Layout.vertical.sm,
-    backgroundColor: Colors.white,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      paddingHorizontal: Layout.horizontal.md,
+      paddingTop: Layout.vertical.sm,
+      backgroundColor: colors.background,
+      gap: Layout.horizontal.xs,
+    },
+    pill: {
+      flex: 1,
+      flexDirection: "column",
+      backgroundColor: colors.surfaceSubtle,
+      borderRadius: 25,
+      overflow: "hidden",
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: Layout.horizontal.sm,
+      paddingVertical: Layout.vertical.xxs,
+      minHeight: Layout.vertical.lg,
+      gap: Layout.horizontal.xs,
+    },
+    icon: {
+      paddingVertical: Layout.vertical.xxs,
+      paddingHorizontal: Layout.horizontal.xxs,
+    },
+    gifLabel: {
+      fontFamily: Typography.fonts.dm.bold,
+      fontSize: Typography.sizes.xxs,
+      color: colors.muted,
+      letterSpacing: 0.3,
+    },
+    input: {
+      flex: 1,
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.black,
+      maxHeight: Layout.vertical["5xl"],
+      paddingVertical: 0,
+      paddingHorizontal: Layout.horizontal.xxs,
+    },
+    sendBtn: {
+      paddingVertical: Layout.vertical.sm,
+      paddingLeft: Layout.horizontal.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    sendBtnDisabled: {
+      opacity: 0.6,
+    },
+    closeBtn: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    imageBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: Layout.vertical.sm,
+      paddingHorizontal: Layout.horizontal.sm,
+      gap: Layout.horizontal.xs,
+    },
+    imageWrap: {
+      width: iw(40),
+      height: iw(40),
+      borderRadius: 10,
+      overflow: "hidden",
+    },
+    imageThumb: {
+      width: "100%",
+      height: "100%",
+      backgroundColor: colors.white,
+    },
+    imageLabel: {
+      flex: 1,
+      minWidth: 0,
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xxs,
+      color: colors.label,
+    },
+    replyBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.replyComposerBg,
+      paddingHorizontal: Layout.horizontal.sm,
+      gap: Layout.horizontal.xs,
+    },
+    replyRail: {
+      width: 4,
+      alignSelf: "stretch",
+      marginVertical: Layout.vertical.sm,
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+    },
+    replyBody: {
+      flex: 1,
+      minWidth: 0,
+      paddingVertical: Layout.vertical.sm,
+    },
+    replyHandle: {
+      fontFamily: Typography.fonts.dm.bold,
+      fontSize: Typography.sizes.xxs,
+      color: colors.primary,
+    },
+    replyText: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xxs,
+      color: colors.text,
+      marginTop: Layout.vertical.xxs,
+    },
+    replyThumb: {
+      width: iw(28),
+      height: iw(28),
+      borderRadius: 5,
+      marginTop: Layout.vertical.sm,
+      backgroundColor: colors.white,
+    },
+  });

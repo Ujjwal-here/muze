@@ -2,9 +2,7 @@ const MENTION_REGEX_SRC = "@([A-Za-z0-9_.]+)";
 
 export interface MentionSegment {
   type: "text" | "mention";
-
   value: string;
-
   raw: string;
 }
 
@@ -34,23 +32,6 @@ export function parseMentions(input: string): MentionSegment[] {
 
   if (out.length === 0) {
     out.push({ type: "text", value: input, raw: input });
-  }
-  return out;
-}
-
-export function extractMentionedUsernames(text: string): string[] {
-  const re = new RegExp(MENTION_REGEX_SRC, "g");
-  const seen = new Set<string>();
-  const out: string[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null) {
-    const prev = m.index === 0 ? "" : text[m.index - 1];
-    if (prev !== "" && !/\s/.test(prev)) continue;
-    const lower = m[1].toLowerCase();
-    if (!seen.has(lower)) {
-      seen.add(lower);
-      out.push(m[1]);
-    }
   }
   return out;
 }

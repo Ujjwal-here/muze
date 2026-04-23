@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { formatDate } from "@/shared/utils/date";
 import { PostAvatar } from "./PostAvatar";
 import { MentionText } from "@/components/common/MentionText";
@@ -18,6 +19,8 @@ type Props = {
 };
 
 export function OriginalPostCard({ original }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const displayName =
     original.author?.full_name || original.author?.username || "Unknown";
   const username = original.author?.username || "unknown";
@@ -66,10 +69,11 @@ export function OriginalPostCard({ original }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 10,
     padding: Layout.horizontal.sm,
     marginBottom: Layout.vertical.sm,
@@ -88,29 +92,29 @@ const styles = StyleSheet.create({
   username: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     flexShrink: 1,
   },
   dot: {
-    color: Colors.muted,
+    color: colors.muted,
     fontSize: Typography.sizes.xs,
   },
   displayName: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     flexShrink: 1,
   },
   date: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
+    color: colors.muted,
     marginLeft: Layout.horizontal.xxs,
   },
   content: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     lineHeight: Typography.sizes.xs * 1.5,
     marginTop: Layout.vertical.xs,
   },

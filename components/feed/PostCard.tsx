@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
-import { toggleLike } from "@/shared/services/posts";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
+import { toggleLike, toggleDislike } from "@/shared/services/posts";
 import type { PostWithMeta } from "@/shared/types/post";
 import { PostMenu } from "@/components/common/PostMenu";
 import { RepostSheet } from "@/components/common/RepostSheet";
@@ -21,6 +22,7 @@ type Props = {
   post: PostWithMeta;
   currentUserId?: string;
   onLikeChange: (postId: string, liked: boolean, count: number) => void;
+  onDislikeChange: (postId: string, disliked: boolean) => void;
   onDeleted: (postId: string) => void;
 };
 
@@ -28,62 +30,74 @@ export function PostCard({
   post,
   currentUserId,
   onLikeChange,
+  onDislikeChange,
   onDeleted,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [liked, setLiked] = useState(post.is_liked);
-  const [disliked, setDisliked] = useState(false);
+  const [disliked, setDisliked] = useState(post.is_disliked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
-  const [liking, setLiking] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [repostSheetVisible, setRepostSheetVisible] = useState(false);
   const [reposted, setReposted] = useState(post.is_reposted);
-  // Combined reposts + quotes is what the UI shows on the repost button;
-  // the server columns stay separate.
   const [repostsCount, setRepostsCount] = useState(
     post.reposts_count + post.quotes_count,
   );
 
-  useEffect(() => {
-    setLiked(post.is_liked);
-    setLikesCount(post.likes_count);
-    setReposted(post.is_reposted);
-    setRepostsCount(post.reposts_count + post.quotes_count);
-  }, [
-    post.is_liked,
-    post.likes_count,
-    post.is_reposted,
-    post.reposts_count,
-    post.quotes_count,
-  ]);
-
   const handleLike = useCallback(async () => {
-    if (liking) return;
-    setLiking(true);
-    if (disliked) setDisliked(false);
+    if (busy) return;
+    setBusy(true);
+    const prevLiked = liked;
+    const prevDisliked = disliked;
+    const prevCount = likesCount;
     const newLiked = !liked;
     const newCount = newLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
     setLiked(newLiked);
+    setDisliked(false);
     setLikesCount(newCount);
     try {
       const result = await toggleLike(post.id);
       setLiked(result.liked);
       setLikesCount(result.likes_count);
       onLikeChange(post.id, result.liked, result.likes_count);
-    } catch {
-      setLiked(!newLiked);
-      setLikesCount(likesCount);
+      onDislikeChange(post.id, false);
+    } catch (e) {
+      console.error("toggleLike error:", e);
+      setLiked(prevLiked);
+      setDisliked(prevDisliked);
+      setLikesCount(prevCount);
     } finally {
-      setLiking(false);
+      setBusy(false);
     }
-  }, [liking, liked, disliked, likesCount, post.id, onLikeChange]);
+  }, [busy, liked, disliked, likesCount, post.id]);
 
-  const handleDislike = useCallback(() => {
-    if (liked) {
-      setLiked(false);
-      setLikesCount((c) => Math.max(0, c - 1));
+  const handleDislike = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    const prevLiked = liked;
+    const prevDisliked = disliked;
+    const prevCount = likesCount;
+    const newDisliked = !disliked;
+    const newCount = liked ? Math.max(0, likesCount - 1) : likesCount;
+    setDisliked(newDisliked);
+    setLiked(false);
+    setLikesCount(newCount);
+    try {
+      const result = await toggleDislike(post.id);
+      setDisliked(result.disliked);
+      onDislikeChange(post.id, result.disliked);
+      if (prevLiked) onLikeChange(post.id, false, newCount);
+    } catch (e) {
+      console.error("toggleDislike error:", e);
+      setDisliked(prevDisliked);
+      setLiked(prevLiked);
+      setLikesCount(prevCount);
+    } finally {
+      setBusy(false);
     }
-    setDisliked((d) => !d);
-  }, [liked]);
+  }, [busy, disliked, liked, likesCount, post.id]);
 
   const handleRepostChange = useCallback((newReposted: boolean) => {
     setReposted(newReposted);
@@ -172,27 +186,28 @@ export function PostCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: Layout.horizontal.sm,
-    paddingHorizontal: Layout.horizontal.sm,
-    paddingVertical: Layout.vertical.md,
-    backgroundColor: Colors.white,
-    marginTop: Layout.vertical.sm,
-    borderRadius: 8,
-  },
-  content: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-    marginVertical: Layout.vertical.xs,
-  },
-  mention: {
-    fontFamily: Typography.fonts.dm.medium,
-  },
-  mediaWrap: {
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: Colors.white,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      marginHorizontal: Layout.horizontal.sm,
+      paddingHorizontal: Layout.horizontal.sm,
+      paddingVertical: Layout.vertical.md,
+      backgroundColor: colors.background,
+      marginTop: Layout.vertical.sm,
+      borderRadius: 8,
+    },
+    content: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.black,
+      marginVertical: Layout.vertical.xs,
+    },
+    mention: {
+      fontFamily: Typography.fonts.dm.medium,
+    },
+    mediaWrap: {
+      borderRadius: 12,
+      overflow: "hidden",
+      backgroundColor: colors.background,
+    },
+  });

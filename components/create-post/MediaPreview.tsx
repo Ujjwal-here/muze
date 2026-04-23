@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Image, Pressable, StyleSheet } from "react-native";
 import { X } from "lucide-react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Layout } from "@/constants/layout";
 import { iw, ih } from "@/shared/utils/responsive";
 
@@ -11,21 +12,24 @@ type Props = {
 };
 
 export function MediaPreview({ uri, onRemove }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.card}>
       <Pressable style={styles.close} onPress={onRemove} hitSlop={8}>
-        <X size={iw(14)} color={Colors.black} strokeWidth={1.75} />
+        <X size={iw(14)} color={colors.black} strokeWidth={1.75} />
       </Pressable>
       <Image source={{ uri }} style={styles.thumb} resizeMode="cover" />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   card: {
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
     position: "relative",
   },
   close: {
@@ -36,13 +40,13 @@ const styles = StyleSheet.create({
     width: iw(24),
     height: iw(24),
     borderRadius: 999,
-    backgroundColor: Colors.scrimStrong,
+    backgroundColor: colors.scrimStrong,
     alignItems: "center",
     justifyContent: "center",
   },
   thumb: {
     width: "100%",
     height: Layout.vertical["22xl"],
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
 });

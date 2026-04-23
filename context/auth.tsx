@@ -23,6 +23,13 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+async function refreshUser(setUser: (u: User) => void) {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data.user) setUser(data.user);
+  } catch {}
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -32,18 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       supabase.realtime.setAuth(session?.access_token ?? null);
-
       if (session) {
         setUser(session.user);
-
-        try {
-          const { data, error } = await supabase.auth.getUser();
-          if (!error && data.user) {
-            setUser(data.user);
-          }
-        } catch {}
+        await refreshUser(setUser);
       }
-
       setLoading(false);
     });
 
@@ -52,22 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       supabase.realtime.setAuth(session?.access_token ?? null);
-
       if (session) {
         setUser(session.user);
-
-        if (event !== "TOKEN_REFRESHED") {
-          try {
-            const { data, error } = await supabase.auth.getUser();
-            if (!error && data.user) {
-              setUser(data.user);
-            }
-          } catch {}
-        }
+        if (event !== "TOKEN_REFRESHED") await refreshUser(setUser);
       } else {
         setUser(null);
       }
-
       setLoading(false);
     });
 

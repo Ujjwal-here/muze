@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { router } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { supabase } from "@/shared/lib/supabase";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { FormField } from "@/components/ui/FormField";
@@ -17,6 +18,8 @@ import { useFadeSlideAnims } from "@/hooks/useFadeSlideAnims";
 import { toast } from "sonner-native";
 
 export default function OnboardingScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [fullName, setFullName] = useState("");
   const [dob, setDob] = useState<DateOfBirth>({ day: "", month: "", year: "" });
   const [loading, setLoading] = useState(false);
@@ -61,8 +64,7 @@ export default function OnboardingScreen() {
     const dobStr = `${dob.year}-${String(MONTH_INDEX[dob.month]).padStart(2, "0")}-${String(parseInt(dob.day)).padStart(2, "0")}`;
 
     try {
-      // supabase.auth.updateUser can hang indefinitely on React Native with
-      // AsyncStorage. Race it against a timeout so the button never gets stuck.
+      // updateUser can hang on RN + AsyncStorage — race it against a timeout.
       const updatePromise = supabase.auth.updateUser({
         data: {
           full_name: fullName.trim(),
@@ -133,7 +135,8 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   inner: {
     flex: 1,
     justifyContent: "space-between",
@@ -145,14 +148,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: Typography.fonts.cabin.bold,
     fontSize: Typography.sizes.lg,
-    color: Colors.black,
+    color: colors.black,
     textAlign: "center",
     marginBottom: Layout.vertical.md,
   },
   subtitle: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.subtitle,
+    color: colors.subtitle,
     textAlign: "center",
     lineHeight: Typography.sizes.xs * 1.6,
     marginBottom: Layout.vertical["3xl"],

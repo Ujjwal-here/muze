@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -14,6 +15,8 @@ type Props = {
 };
 
 export function ConversationRow({ convo, onPress }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const unreadCount = convo.unread_count ?? 0;
   const displayName = convo.other_username
     ? `@${convo.other_username}`
@@ -52,14 +55,15 @@ export function ConversationRow({ convo, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   item: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Layout.horizontal.lg,
     paddingVertical: Layout.vertical.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     gap: Layout.horizontal.sm,
   },
   avatarWrap: {
@@ -70,14 +74,14 @@ const styles = StyleSheet.create({
     width: iw(40),
     height: iw(40),
     borderRadius: 999,
-    backgroundColor: Colors.label,
+    backgroundColor: colors.label,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarTxt: {
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xs,
-    color: Colors.white,
+    color: colors.white,
   },
   badge: {
     position: "absolute",
@@ -86,17 +90,17 @@ const styles = StyleSheet.create({
     width: iw(18),
     height: iw(18),
     borderRadius: 999,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Layout.horizontal.xxs,
     borderWidth: 2,
-    borderColor: Colors.white,
+    borderColor: colors.white,
   },
   badgeTxt: {
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xxxs,
-    color: Colors.white,
+    color: colors.white,
   },
   content: {
     flex: 1,
@@ -110,17 +114,17 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     flex: 1,
     marginRight: Layout.horizontal.xs,
   },
   time: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   timeUnread: {
-    color: Colors.primary,
+    color: colors.primary,
     fontFamily: Typography.fonts.dm.semibold,
   },
 });

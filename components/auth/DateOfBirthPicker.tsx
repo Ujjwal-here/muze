@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -54,6 +55,8 @@ interface DateOfBirthPickerProps {
 }
 
 export function DateOfBirthPicker({ value, onChange }: DateOfBirthPickerProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
 
   const { day, month, year } = value;
@@ -94,7 +97,7 @@ export function DateOfBirthPicker({ value, onChange }: DateOfBirthPickerProps) {
         >
           {fieldValue || field.charAt(0).toUpperCase() + field.slice(1)}
         </Text>
-        <Ionicons name="chevron-down" size={iw(14)} color={Colors.muted} />
+        <Ionicons name="chevron-down" size={iw(14)} color={colors.muted} />
       </Pressable>
     );
   };
@@ -124,11 +127,12 @@ export function DateOfBirthPicker({ value, onChange }: DateOfBirthPickerProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   label: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     marginBottom: Layout.vertical.xs,
   },
   row: {
@@ -142,19 +146,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     height: Layout.horizontal["2xl"],
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: Layout.horizontal.sm,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   dropdownTxt: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
   },
   dropdownPlaceholder: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
   },
 });

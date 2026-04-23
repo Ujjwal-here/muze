@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -12,10 +13,12 @@ interface PostHeaderProps {
 }
 
 export function PostHeader({ initial }: PostHeaderProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.header}>
       <Pressable style={styles.backBtn} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={iw(20)} color={Colors.black} />
+        <Ionicons name="arrow-back" size={iw(20)} color={colors.black} />
       </Pressable>
 
       <View style={styles.feedRow}>
@@ -27,7 +30,7 @@ export function PostHeader({ initial }: PostHeaderProps) {
               <Text style={styles.avatarTxt}>{initial}</Text>
             </View>
             <Text style={styles.feedLabel}> My Feed</Text>
-            <Ionicons name="chevron-down" size={iw(14)} color={Colors.muted} />
+            <Ionicons name="chevron-down" size={iw(14)} color={colors.muted} />
           </View>
         </View>
       </View>
@@ -37,7 +40,8 @@ export function PostHeader({ initial }: PostHeaderProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -54,7 +58,7 @@ const styles = StyleSheet.create({
   feedPill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 20,
     paddingVertical: Layout.vertical.sm,
     paddingHorizontal: Layout.horizontal.lg,
@@ -62,7 +66,7 @@ const styles = StyleSheet.create({
   postToText: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     marginRight: Layout.horizontal.xxs,
   },
   avatarPill: {
@@ -75,18 +79,18 @@ const styles = StyleSheet.create({
     width: iw(22),
     height: iw(22),
     borderRadius: 999,
-    backgroundColor: Colors.label,
+    backgroundColor: colors.label,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarTxt: {
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xxxs,
-    color: Colors.white,
+    color: colors.white,
   },
   feedLabel: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
   },
 });

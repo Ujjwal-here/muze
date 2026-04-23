@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { Trash2 } from "lucide-react-native";
 import { toast } from "sonner-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw, ih } from "@/shared/utils/responsive";
@@ -31,6 +32,8 @@ export function PostMenu({
   onClose,
   onDeleted,
 }: PostMenuProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isOwner = post.user_id === currentUserId;
 
   const handleDelete = () => {
@@ -72,7 +75,7 @@ export function PostMenu({
 
         {isOwner && (
           <MenuItem
-            icon={<Trash2 size={iw(20)} color="#E53935" strokeWidth={1.75} />}
+            icon={<Trash2 size={iw(20)} color={colors.danger} strokeWidth={1.75} />}
             label="Delete post"
             onPress={handleDelete}
             danger
@@ -98,6 +101,8 @@ function MenuItem({
   onPress: () => void;
   danger?: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -114,17 +119,18 @@ function MenuItem({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: colors.overlayModal,
   },
   sheet: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderTopLeftRadius: iw(20),
     borderTopRightRadius: iw(20),
     paddingTop: ih(10),
@@ -135,7 +141,7 @@ const styles = StyleSheet.create({
     width: iw(36),
     height: ih(4),
     borderRadius: iw(2),
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     alignSelf: "center",
     marginBottom: ih(16),
   },
@@ -148,31 +154,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.horizontal.sm,
   },
   menuItemPressed: {
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
   },
   menuLabel: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
   },
   menuLabelDanger: {
-    color: "#E53935",
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: ih(4),
+    color: colors.danger,
   },
   cancelBtn: {
     marginTop: ih(8),
     paddingVertical: ih(14),
     alignItems: "center",
     borderRadius: iw(10),
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
   },
   cancelTxt: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
   },
 });

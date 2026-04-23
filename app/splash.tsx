@@ -1,7 +1,8 @@
 import { Layout } from "@/constants/layout";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { iw } from "@/shared/utils/responsive";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Image, Animated, StyleSheet, StatusBar } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/context/auth";
@@ -9,6 +10,8 @@ import { useAuth } from "@/context/auth";
 const MIN_SPLASH_MS = 2800;
 
 const SplashScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { session, user, loading } = useAuth();
   const [animDone, setAnimDone] = useState(false);
 
@@ -177,7 +180,7 @@ const SplashScreen: React.FC = () => {
       >
         <Image
           source={require("@/assets/images/muze-logo.png")}
-          style={styles.logo}
+          style={[styles.logo, { tintColor: colors.logoTint }]}
           resizeMode="contain"
         />
       </Animated.View>
@@ -187,30 +190,31 @@ const SplashScreen: React.FC = () => {
 
 const RING_SIZE = Layout.horizontal["10xl"];
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logo: {
-    width: iw(70),
-    height: iw(70),
-  },
-  ring: {
-    position: "absolute",
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-    borderWidth: 1,
-    borderColor: Colors.black,
-    backgroundColor: "transparent",
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    logoWrapper: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    logo: {
+      width: iw(70),
+      height: iw(70),
+    },
+    ring: {
+      position: "absolute",
+      width: RING_SIZE,
+      height: RING_SIZE,
+      borderRadius: RING_SIZE / 2,
+      borderWidth: 1,
+      borderColor: colors.black,
+      backgroundColor: "transparent",
+    },
+  });
 
 export default SplashScreen;

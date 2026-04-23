@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Pressable,
@@ -14,7 +20,8 @@ import { router, useFocusEffect } from "expo-router";
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth";
 import { fetchFeed } from "@/shared/services/posts";
 import type { PostWithMeta } from "@/shared/types/post";
@@ -23,6 +30,8 @@ import type { FeedTab } from "@/components/feed";
 import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, loading: authLoading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<FeedTab>("Following");
   const [posts, setPosts] = useState<PostWithMeta[]>([]);
@@ -73,17 +82,31 @@ export default function HomeScreen() {
     }, [loadPosts]),
   );
 
-  const handleLikeChange = (postId: string, liked: boolean, count: number) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, is_liked: liked, likes_count: count } : p,
-      ),
-    );
-  };
+  const handleLikeChange = useCallback(
+    (postId: string, liked: boolean, count: number) => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, is_liked: liked, likes_count: count } : p,
+        ),
+      );
+    },
+    [],
+  );
 
-  const handleDeleted = (postId: string) => {
+  const handleDislikeChange = useCallback(
+    (postId: string, disliked: boolean) => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, is_disliked: disliked } : p,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleDeleted = useCallback((postId: string) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
-  };
+  }, []);
 
   return (
     <ScreenWrapper scrollable={false} style={styles.root}>
@@ -91,7 +114,7 @@ export default function HomeScreen() {
 
       {loading || authLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
@@ -110,7 +133,7 @@ export default function HomeScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={() => loadPosts(true)}
-                tintColor={Colors.primary}
+                tintColor={colors.primary}
               />
             }
           >
@@ -123,6 +146,7 @@ export default function HomeScreen() {
                   post={post}
                   currentUserId={user?.id}
                   onLikeChange={handleLikeChange}
+                  onDislikeChange={handleDislikeChange}
                   onDeleted={handleDeleted}
                 />
               ))
@@ -139,76 +163,77 @@ export default function HomeScreen() {
       )}
 
       <Pressable style={styles.fab} onPress={() => router.push("/create_post")}>
-        <Pencil size={iw(22)} color={Colors.white} strokeWidth={1.75} />
+        <Pencil size={iw(22)} color={colors.white} strokeWidth={1.75} />
       </Pressable>
     </ScreenWrapper>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { backgroundColor: "#F5F5F5" },
-  feed: { flex: 1 },
-  feedContent: { paddingBottom: Layout.vertical["3xl"] },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Layout.vertical.md,
-  },
-  errorTxt: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.sm,
-    color: Colors.muted,
-    textAlign: "center",
-    paddingHorizontal: Layout.horizontal.lg,
-  },
-  retryBtn: {
-    paddingHorizontal: Layout.horizontal.sm,
-    paddingVertical: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 20,
-  },
-  retryTxt: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.sm,
-    color: Colors.white,
-  },
-  endOfFeed: {
-    alignItems: "center",
-    paddingVertical: Layout.vertical["3xl"],
-    gap: Layout.vertical.sm,
-  },
-  endOfFeedTxt: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  logoutBtn: {
-    paddingHorizontal: Layout.horizontal.sm,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  logoutTxt: {
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  fab: {
-    position: "absolute",
-    bottom: Layout.vertical.lg,
-    right: Layout.horizontal.lg,
-    width: iw(50),
-    height: iw(50),
-    borderRadius: 999,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 4,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    root: { backgroundColor: colors.surfaceMuted },
+    feed: { flex: 1 },
+    feedContent: { paddingBottom: Layout.vertical["3xl"] },
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: Layout.vertical.md,
+    },
+    errorTxt: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.sm,
+      color: colors.muted,
+      textAlign: "center",
+      paddingHorizontal: Layout.horizontal.lg,
+    },
+    retryBtn: {
+      paddingHorizontal: Layout.horizontal.sm,
+      paddingVertical: 8,
+      backgroundColor: colors.primary,
+      borderRadius: 20,
+    },
+    retryTxt: {
+      fontFamily: Typography.fonts.dm.semibold,
+      fontSize: Typography.sizes.sm,
+      color: colors.white,
+    },
+    endOfFeed: {
+      alignItems: "center",
+      paddingVertical: Layout.vertical["3xl"],
+      gap: Layout.vertical.sm,
+    },
+    endOfFeedTxt: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    logoutBtn: {
+      paddingHorizontal: Layout.horizontal.sm,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    logoutTxt: {
+      fontFamily: Typography.fonts.dm.medium,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    fab: {
+      position: "absolute",
+      bottom: Layout.vertical.lg,
+      right: Layout.horizontal.lg,
+      width: iw(50),
+      height: iw(50),
+      borderRadius: 999,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 4,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+  });

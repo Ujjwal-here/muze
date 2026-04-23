@@ -1,9 +1,10 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useMemo } from "react";
 import { StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { StatusBar } from "expo-status-bar";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 
 interface ScreenWrapperProps {
   children: ReactNode;
@@ -15,15 +16,19 @@ interface ScreenWrapperProps {
 
 export function ScreenWrapper({
   children,
-  statusBarStyle = "dark",
+  statusBarStyle,
   style,
   scrollable = true,
   edges = ["top", "left", "right"],
 }: ScreenWrapperProps) {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const resolvedBarStyle = statusBarStyle ?? (isDark ? "light" : "dark");
+
   if (!scrollable) {
     return (
       <SafeAreaView style={[styles.root, style]} edges={edges}>
-        <StatusBar style={statusBarStyle} />
+        <StatusBar style={resolvedBarStyle} />
         {children}
       </SafeAreaView>
     );
@@ -31,7 +36,7 @@ export function ScreenWrapper({
 
   return (
     <SafeAreaView style={styles.root} edges={edges}>
-      <StatusBar style={statusBarStyle} />
+      <StatusBar style={resolvedBarStyle} />
       <KeyboardAwareScrollView
         style={styles.root}
         contentContainerStyle={[styles.content, style]}
@@ -46,13 +51,14 @@ export function ScreenWrapper({
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  content: {
-    flexGrow: 1,
-    backgroundColor: Colors.white,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flexGrow: 1,
+      backgroundColor: colors.background,
+    },
+  });

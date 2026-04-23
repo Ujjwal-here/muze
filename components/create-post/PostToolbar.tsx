@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { ImageIcon, PlayCircle } from "lucide-react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function PostToolbar({ onPickImage, imagePicked, disabled }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.row}>
       <Pressable
@@ -21,14 +24,14 @@ export function PostToolbar({ onPickImage, imagePicked, disabled }: Props) {
       >
         <ImageIcon
           size={iw(18)}
-          color={imagePicked ? Colors.placeholder : Colors.muted}
+          color={imagePicked ? colors.placeholder : colors.muted}
           strokeWidth={1.75}
         />
       </Pressable>
       <Pressable style={[styles.btn, styles.btnDisabled]} disabled>
         <PlayCircle
           size={iw(18)}
-          color={Colors.placeholder}
+          color={colors.placeholder}
           strokeWidth={1.75}
         />
       </Pressable>
@@ -36,7 +39,8 @@ export function PostToolbar({ onPickImage, imagePicked, disabled }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -49,7 +53,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.surfaceSubtle,
+    backgroundColor: colors.surfaceSubtle,
   },
   btnDisabled: {
     opacity: 0.5,

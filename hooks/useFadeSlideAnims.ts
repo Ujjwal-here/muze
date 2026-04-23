@@ -1,10 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Animated } from "react-native";
 
-/**
- * Creates N staggered fade+slide-up animations and starts them on mount.
- * Returns the array of Animated.Values and a helper to build the style.
- */
+// Creates N staggered fade+slide-up animations and starts them on mount.
 export function useFadeSlideAnims(count: number, staggerMs = 80) {
   const anims = useRef<Animated.Value[]>(
     Array.from({ length: count }, () => new Animated.Value(0))

@@ -20,7 +20,8 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { useAuth } from "@/context/auth";
 import { fetchInbox, subscribeToInbox } from "@/shared/services/chat";
 import type { InboxItem, Profile } from "@/shared/types/chat";
@@ -28,6 +29,8 @@ import { ScreenWrapper } from "@/components/ui/ScreenWrapper";
 import { NewMessageModal, ConversationRow } from "@/components/messages";
 
 export default function MessagesScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [inbox, setInbox] = useState<InboxItem[]>([]);
@@ -155,7 +158,7 @@ export default function MessagesScreen() {
     return (
       <ScreenWrapper scrollable={false}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </ScreenWrapper>
     );
@@ -167,7 +170,7 @@ export default function MessagesScreen() {
         <View style={styles.searchBar}>
           <Search
             size={iw(16)}
-            color={Colors.muted}
+            color={colors.muted}
             style={styles.searchIcon}
             strokeWidth={1.75}
           />
@@ -175,7 +178,7 @@ export default function MessagesScreen() {
             value={search}
             onChangeText={setSearch}
             placeholder="Search Chats..."
-            placeholderTextColor={Colors.muted}
+            placeholderTextColor={colors.muted}
             style={styles.searchInput}
             returnKeyType="search"
           />
@@ -189,7 +192,7 @@ export default function MessagesScreen() {
           ]}
           hitSlop={8}
         >
-          <Plus size={iw(16)} color={Colors.black} strokeWidth={1.75} />
+          <Plus size={iw(16)} color={colors.black} strokeWidth={1.75} />
         </Pressable>
       </View>
 
@@ -199,7 +202,7 @@ export default function MessagesScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={colors.primary}
           />
         }
       >
@@ -215,7 +218,7 @@ export default function MessagesScreen() {
           <View style={styles.emptyEnd}>
             <MessageCircle
               size={iw(40)}
-              color={Colors.border}
+              color={colors.border}
               strokeWidth={1.75}
             />
             <Text style={styles.emptyTxt}>
@@ -244,7 +247,8 @@ export default function MessagesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   center: {
     flex: 1,
     alignItems: "center",
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: Layout.vertical["2xl"],
     borderRadius: 999,
-    backgroundColor: Colors.surfaceSubtle,
+    backgroundColor: colors.surfaceSubtle,
     paddingHorizontal: Layout.horizontal.sm,
   },
   searchIcon: {
@@ -274,7 +278,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     padding: 0,
   },
   addBtn: {
@@ -282,13 +286,13 @@ const styles = StyleSheet.create({
     height: iw(35),
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
   },
   addBtnPressed: {
-    backgroundColor: Colors.surfaceSubtle,
+    backgroundColor: colors.surfaceSubtle,
   },
   emptyEnd: {
     alignItems: "center",
@@ -298,11 +302,11 @@ const styles = StyleSheet.create({
   emptyTxt: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   newChatBtn: {
     marginTop: Layout.vertical.sm,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: Layout.horizontal.lg,
     paddingVertical: Layout.vertical.sm,
     borderRadius: 20,
@@ -310,6 +314,6 @@ const styles = StyleSheet.create({
   newChatBtnTxt: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.white,
+    color: colors.white,
   },
 });

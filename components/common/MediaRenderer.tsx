@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { iw, ih } from "@/shared/utils/responsive";
 
@@ -46,6 +47,8 @@ function ImageCard({
   cardHeight: number;
   radius: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [error, setError] = useState(false);
 
   const safeUrl = (() => {
@@ -66,7 +69,7 @@ function ImageCard({
       <View
         style={[styles.errorBox, { height: cardHeight, borderRadius: radius }]}
       >
-        <Ionicons name="image-outline" size={iw(32)} color={Colors.muted} />
+        <Ionicons name="image-outline" size={iw(32)} color={colors.muted} />
         <Text style={styles.errorTxt}>Image unavailable</Text>
         <Text style={styles.errorUrl} numberOfLines={2}>
           {safeUrl}
@@ -82,7 +85,7 @@ function ImageCard({
         width: "100%",
         height: cardHeight,
         borderRadius: radius,
-        backgroundColor: Colors.border,
+        backgroundColor: colors.border,
       }}
       resizeMode="cover"
       onError={() => setError(true)}
@@ -99,6 +102,8 @@ export function MediaRenderer({
   height?: number;
   borderRadius?: number;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const parsed = parseMediaUrls(urls);
   if (parsed.length === 0) return null;
 
@@ -111,10 +116,11 @@ export function MediaRenderer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   errorBox: {
     width: "100%",
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
     alignItems: "center",
     justifyContent: "center",
     gap: ih(8),
@@ -122,12 +128,12 @@ const styles = StyleSheet.create({
   errorTxt: {
     fontFamily: Typography.fonts.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   errorUrl: {
     fontFamily: Typography.fonts.regular,
     fontSize: Typography.sizes.xxxs,
-    color: Colors.muted,
+    color: colors.muted,
     paddingHorizontal: iw(16),
     textAlign: "center",
   },

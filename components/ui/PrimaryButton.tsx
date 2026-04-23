@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Pressable,
   Text,
@@ -6,7 +6,8 @@ import {
   StyleProp,
   ViewStyle,
 } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 
@@ -27,13 +28,15 @@ export function PrimaryButton({
   disabled = false,
   style,
 }: PrimaryButtonProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isDisabled = disabled || loading;
   return (
     <Pressable
       style={({ pressed }) => [
         styles.btn,
         isDisabled && styles.btnDisabled,
-        pressed && !isDisabled && { backgroundColor: Colors.primaryPressed },
+        pressed && !isDisabled && { backgroundColor: colors.primaryPressed },
         style,
       ]}
       onPress={onPress}
@@ -44,20 +47,21 @@ export function PrimaryButton({
   );
 }
 
-const styles = StyleSheet.create({
-  btn: {
-    paddingVertical: Layout.vertical.smMd,
-    backgroundColor: Colors.primary,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnDisabled: {
-    opacity: 0.5,
-  },
-  label: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.sm,
-    color: Colors.white,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    btn: {
+      paddingVertical: Layout.vertical.smMd,
+      backgroundColor: colors.primary,
+      borderRadius: 30,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnDisabled: {
+      opacity: 0.5,
+    },
+    label: {
+      fontFamily: Typography.fonts.dm.semibold,
+      fontSize: Typography.sizes.sm,
+      color: colors.textOnPrimary,
+    },
+  });

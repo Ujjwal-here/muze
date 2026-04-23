@@ -15,7 +15,6 @@ export interface ReplySnapshot {
   sender_username?: string | null;
   message_type: MessageType;
   content: string | null;
-
   metadata?: Record<string, any> | null;
 }
 
@@ -28,20 +27,6 @@ export interface Message {
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
-}
-
-export interface Conversation {
-  id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ConversationParticipant {
-  id: string;
-  conversation_id: string;
-  user_id: string;
-  joined_at: string;
-  last_read_at: string;
 }
 
 export interface InboxItem {
@@ -59,8 +44,4 @@ export interface InboxItem {
   last_read_at: string;
   has_unread: boolean;
   unread_count?: number;
-}
-
-export interface MessageWithSender extends Message {
-  sender?: Profile;
 }

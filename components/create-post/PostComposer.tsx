@@ -1,7 +1,8 @@
-import React, { RefObject } from "react";
+import React, { RefObject, useMemo } from "react";
 import { View, TextInput, Image, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -28,13 +29,15 @@ export function PostComposer({
   media,
   onRemoveMedia,
 }: PostComposerProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.composerWrap}>
       <TextInput
         ref={inputRef}
         style={styles.input}
         placeholder="Share something that inspires your followers, drop a laugh-out-loud meme, or ignite a bold debate in your community..."
-        placeholderTextColor={Colors.placeholder}
+        placeholderTextColor={colors.placeholder}
         multiline
         autoFocus
         value={content}
@@ -44,7 +47,7 @@ export function PostComposer({
       {media && (
         <View style={styles.mediaCard}>
           <Pressable style={styles.mediaClose} onPress={onRemoveMedia}>
-            <Ionicons name="close" size={iw(14)} color={Colors.black} />
+            <Ionicons name="close" size={iw(14)} color={colors.black} />
           </Pressable>
           <Image
             source={{ uri: media.uri }}
@@ -57,7 +60,8 @@ export function PostComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   composerWrap: {
     flex: 1,
     paddingHorizontal: Layout.horizontal.lg,
@@ -67,7 +71,7 @@ const styles = StyleSheet.create({
   input: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.sm,
-    color: Colors.black,
+    color: colors.black,
     lineHeight: Typography.sizes.sm * 1.6,
     minHeight: Layout.vertical["10xl"],
     padding: 0,
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
     marginTop: Layout.vertical.md,
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: Colors.inputBg,
+    backgroundColor: colors.inputBg,
     position: "relative",
   },
   mediaClose: {
@@ -87,13 +91,13 @@ const styles = StyleSheet.create({
     width: iw(24),
     height: iw(24),
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: colors.scrimStrong,
     alignItems: "center",
     justifyContent: "center",
   },
   mediaThumb: {
     width: "100%",
     height: Layout.vertical["22xl"],
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
 });

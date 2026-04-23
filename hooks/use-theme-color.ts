@@ -1,21 +1,21 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Return a color resolved against the active theme.
+ * Supports the Expo convention of allowing per-theme overrides via props.
+ *
+ *   const color = useThemeColor({ light: '#000', dark: '#fff' }, 'text');
+ *
+ * If the matching override is missing, it falls back to the theme's value
+ * for `colorName`.
  */
-
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { themes, type ThemeColors } from "@/constants/theme";
+import { useTheme } from "@/context/theme";
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+  colorName: keyof ThemeColors,
 ) {
-  const theme = useColorScheme() ?? 'light';
-  const colorFromProps = props[theme];
-
-  if (colorFromProps) {
-    return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
+  const { theme } = useTheme();
+  const override = props[theme];
+  if (override) return override;
+  return themes[theme][colorName];
 }

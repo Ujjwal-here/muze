@@ -1,5 +1,10 @@
-// components/messages/NewMessageModal.tsx
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import {
   Modal,
   View,
@@ -14,7 +19,8 @@ import {
   Platform,
 } from "react-native";
 import { Search, X } from "lucide-react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -36,6 +42,8 @@ export function NewMessageModal({
   onClose,
   onConversationReady,
 }: NewMessageModalProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
@@ -159,19 +167,19 @@ export function NewMessageModal({
                   pressed && styles.closeBtnPressed,
                 ]}
               >
-                <X size={iw(16)} color={Colors.muted} strokeWidth={2} />
+                <X size={iw(16)} color={colors.muted} strokeWidth={2} />
               </Pressable>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.searchPill}>
-              <Search size={iw(16)} color={Colors.primary} strokeWidth={2.25} />
+              <Search size={iw(16)} color={colors.primary} strokeWidth={2.25} />
               <TextInput
                 value={query}
                 onChangeText={handleSearch}
                 placeholder="Search users..."
-                placeholderTextColor={Colors.muted}
+                placeholderTextColor={colors.muted}
                 style={styles.searchInput}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -182,7 +190,7 @@ export function NewMessageModal({
             <View style={styles.listWrap}>
               {searching ? (
                 <View style={styles.stateCenter}>
-                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 </View>
               ) : query.trim().length < 2 ? (
                 <View style={styles.stateCenter}>
@@ -207,7 +215,7 @@ export function NewMessageModal({
 
             {creating && (
               <View style={styles.creatingOverlay}>
-                <ActivityIndicator size="large" color={Colors.primary} />
+                <ActivityIndicator size="large" color={colors.primary} />
               </View>
             )}
           </Pressable>
@@ -220,139 +228,140 @@ export function NewMessageModal({
 const CARD_WIDTH_PCT = "90%";
 const CARD_MAX_HEIGHT_PCT = "75%";
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: Colors.overlayModal,
-  },
-  centerWrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Layout.horizontal.sm,
-  },
-  card: {
-    width: CARD_WIDTH_PCT,
-    maxHeight: CARD_MAX_HEIGHT_PCT,
-    backgroundColor: Colors.white,
-    borderRadius: 20,
-    paddingHorizontal: Layout.horizontal.md,
-    paddingTop: Layout.vertical.md,
-    paddingBottom: Layout.vertical.md,
-    shadowColor: Colors.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
-    overflow: "hidden",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: Layout.vertical.sm,
-  },
-  title: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-  },
-  closeBtn: {
-    width: iw(28),
-    height: iw(28),
-    borderRadius: 999,
-    backgroundColor: Colors.surfaceNeutral,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeBtnPressed: {
-    backgroundColor: Colors.border,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginBottom: Layout.vertical.md,
-  },
-  searchPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xs,
-    backgroundColor: Colors.surfaceSubtle,
-    borderRadius: 22,
-    paddingHorizontal: Layout.horizontal.sm,
-    height: Layout.vertical["2xl"],
-    marginBottom: Layout.vertical.sm,
-  },
-  searchInput: {
-    flex: 1,
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-    padding: 0,
-  },
-  listWrap: {
-    minHeight: Layout.vertical["22xl"],
-    maxHeight: Layout.vertical["32xl"],
-  },
-  stateCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Layout.vertical["2xl"],
-  },
-  stateText: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  userItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Layout.vertical.sm,
-    paddingHorizontal: Layout.horizontal.xxs,
-    gap: Layout.vertical.smMd,
-    borderRadius: 10,
-  },
-  userItemPressed: {
-    backgroundColor: Colors.surfacePressed,
-  },
-  userAvatar: {
-    width: iw(40),
-    height: iw(40),
-    borderRadius: iw(20),
-    backgroundColor: Colors.label,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  userAvatarImg: {
-    width: "100%",
-    height: "100%",
-  },
-  userAvatarTxt: {
-    fontFamily: Typography.fonts.dm.bold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.white,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.xs,
-    color: Colors.black,
-  },
-  userHandle: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-    marginTop: 1,
-  },
-  creatingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.scrim,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: iw(18),
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: colors.overlayModal,
+    },
+    centerWrap: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: Layout.horizontal.sm,
+    },
+    card: {
+      width: CARD_WIDTH_PCT,
+      maxHeight: CARD_MAX_HEIGHT_PCT,
+      backgroundColor: colors.white,
+      borderRadius: 20,
+      paddingHorizontal: Layout.horizontal.md,
+      paddingTop: Layout.vertical.md,
+      paddingBottom: Layout.vertical.md,
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.12,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 10,
+      overflow: "hidden",
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingBottom: Layout.vertical.sm,
+    },
+    title: {
+      fontFamily: Typography.fonts.dm.semibold,
+      fontSize: Typography.sizes.xs,
+      color: colors.black,
+    },
+    closeBtn: {
+      width: iw(28),
+      height: iw(28),
+      borderRadius: 999,
+      backgroundColor: colors.surfaceNeutral,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    closeBtnPressed: {
+      backgroundColor: colors.border,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginBottom: Layout.vertical.md,
+    },
+    searchPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Layout.horizontal.xs,
+      backgroundColor: colors.surfaceSubtle,
+      borderRadius: 22,
+      paddingHorizontal: Layout.horizontal.sm,
+      height: Layout.vertical["2xl"],
+      marginBottom: Layout.vertical.sm,
+    },
+    searchInput: {
+      flex: 1,
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.black,
+      padding: 0,
+    },
+    listWrap: {
+      minHeight: Layout.vertical["22xl"],
+      maxHeight: Layout.vertical["32xl"],
+    },
+    stateCenter: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: Layout.vertical["2xl"],
+    },
+    stateText: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    userItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: Layout.vertical.sm,
+      paddingHorizontal: Layout.horizontal.xxs,
+      gap: Layout.vertical.smMd,
+      borderRadius: 10,
+    },
+    userItemPressed: {
+      backgroundColor: colors.surfacePressed,
+    },
+    userAvatar: {
+      width: iw(40),
+      height: iw(40),
+      borderRadius: iw(20),
+      backgroundColor: colors.label,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+    },
+    userAvatarImg: {
+      width: "100%",
+      height: "100%",
+    },
+    userAvatarTxt: {
+      fontFamily: Typography.fonts.dm.bold,
+      fontSize: Typography.sizes.xs,
+      color: colors.white,
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontFamily: Typography.fonts.dm.semibold,
+      fontSize: Typography.sizes.xs,
+      color: colors.black,
+    },
+    userHandle: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+      marginTop: 1,
+    },
+    creatingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.scrim,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: iw(18),
+    },
+  });

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function ChatEmpty({ avatarInitial, displayName, username }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.wrap}>
       <View style={styles.avatar}>
@@ -24,7 +27,8 @@ export function ChatEmpty({ avatarInitial, displayName, username }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   wrap: {
     alignItems: "center",
     justifyContent: "center",
@@ -35,7 +39,7 @@ const styles = StyleSheet.create({
     width: iw(60),
     height: iw(60),
     borderRadius: 999,
-    backgroundColor: Colors.label,
+    backgroundColor: colors.label,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Layout.vertical.sm,
@@ -43,22 +47,22 @@ const styles = StyleSheet.create({
   avatarTxt: {
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xl,
-    color: Colors.white,
+    color: colors.white,
   },
   name: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.base,
-    color: Colors.black,
+    color: colors.black,
   },
   sub: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   hint: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.placeholder,
+    color: colors.placeholder,
     marginTop: Layout.vertical.sm,
   },
 });

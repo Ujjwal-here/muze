@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { toast } from "sonner-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
-import { iw, ih } from "@/shared/utils/responsive";
+import { iw } from "@/shared/utils/responsive";
 import { useAuth } from "@/context/auth";
 import { quotePost, fetchPost } from "@/shared/services/posts";
 import { uploadToBucket } from "@/shared/services/upload";
@@ -36,6 +37,8 @@ const PLACEHOLDER =
   "Share something that inspires your followers, drop a laugh-out-loud meme, or ignite a bold debate in your community...";
 
 export default function QuotePostScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { postId } = useLocalSearchParams<{ postId: string }>();
   const { user } = useAuth();
   const [content, setContent] = useState("");
@@ -97,7 +100,7 @@ export default function QuotePostScreen() {
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={iw(22)} color={Colors.black} strokeWidth={1.75} />
+          <ArrowLeft size={iw(22)} color={colors.black} strokeWidth={1.75} />
         </Pressable>
         <Text style={styles.headerTitle}>Quote Post</Text>
         <View style={styles.backBtn} />
@@ -118,7 +121,7 @@ export default function QuotePostScreen() {
             value={content}
             onChangeText={setContent}
             placeholder={PLACEHOLDER}
-            placeholderTextColor={Colors.placeholder}
+            placeholderTextColor={colors.placeholder}
             multiline
             autoFocus
             textAlignVertical="top"
@@ -132,7 +135,7 @@ export default function QuotePostScreen() {
 
           {loadingPost ? (
             <View style={styles.loadingCard}>
-              <ActivityIndicator size="small" color={Colors.muted} />
+              <ActivityIndicator size="small" color={colors.muted} />
             </View>
           ) : originalPost ? (
             <QuotePreviewCard post={originalPost} />
@@ -159,57 +162,58 @@ export default function QuotePostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Layout.horizontal.md,
-    paddingVertical: Layout.vertical.sm,
-  },
-  backBtn: {
-    width: iw(36),
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontFamily: Typography.fonts.dm.semibold,
-    fontSize: Typography.sizes.sm,
-    color: Colors.black,
-  },
-  flex: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: Layout.horizontal.lg,
-    paddingTop: Layout.vertical.md,
-    paddingBottom: Layout.vertical.md,
-    gap: Layout.vertical.sm,
-  },
-  input: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.sm,
-    color: Colors.black,
-    lineHeight: Typography.sizes.sm * 1.5,
-    minHeight: Layout.vertical["3xl"],
-    padding: 0,
-  },
-  loadingCard: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 10,
-    padding: Layout.horizontal.sm,
-    backgroundColor: Colors.white,
-    minHeight: Layout.vertical["3xl"],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  footer: {
-    paddingHorizontal: Layout.horizontal.lg,
-    paddingTop: Layout.vertical.sm,
-    paddingBottom: Layout.vertical.md,
-    gap: Layout.vertical.sm,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: Layout.horizontal.md,
+      paddingVertical: Layout.vertical.sm,
+    },
+    backBtn: {
+      width: iw(36),
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerTitle: {
+      fontFamily: Typography.fonts.dm.semibold,
+      fontSize: Typography.sizes.sm,
+      color: colors.black,
+    },
+    flex: { flex: 1 },
+    scrollContent: {
+      paddingHorizontal: Layout.horizontal.lg,
+      paddingTop: Layout.vertical.md,
+      paddingBottom: Layout.vertical.md,
+      gap: Layout.vertical.sm,
+    },
+    input: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.sm,
+      color: colors.black,
+      lineHeight: Typography.sizes.sm * 1.5,
+      minHeight: Layout.vertical["3xl"],
+      padding: 0,
+    },
+    loadingCard: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      padding: Layout.horizontal.sm,
+      backgroundColor: colors.white,
+      minHeight: Layout.vertical["3xl"],
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    footer: {
+      paddingHorizontal: Layout.horizontal.lg,
+      paddingTop: Layout.vertical.sm,
+      paddingBottom: Layout.vertical.md,
+      gap: Layout.vertical.sm,
+    },
+  });

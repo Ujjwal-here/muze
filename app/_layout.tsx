@@ -18,6 +18,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/auth";
+import { ThemeProvider, useTheme } from "@/context/theme";
 import { Toaster } from "sonner-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Typography } from "@/constants/typography";
@@ -25,6 +26,7 @@ import { Typography } from "@/constants/typography";
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
+  const { theme, colors, hydrated: themeHydrated } = useTheme();
   const [fontsLoaded, fontError] = useFonts({
     Cabin_400Regular,
     Cabin_500Medium,
@@ -37,57 +39,63 @@ function RootNavigator() {
     DMSans_700Bold,
   });
 
+  const ready = (fontsLoaded || !!fontError) && themeHydrated;
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (ready) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [ready]);
 
-  if (!fontsLoaded && !fontError) {
+  if (!ready) {
     return null;
   }
 
   return (
     <>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="splash" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="verification" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="create_post" options={{ headerShown: false }} />
-        <Stack.Screen name="quote_post" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="chat/[conversationId]"
-          options={{ headerShown: false }}
-        />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="splash" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="verification" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="create_post" />
+        <Stack.Screen name="quote_post" />
+        <Stack.Screen name="chat/[conversationId]" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
+      <Toaster
+        theme={theme}
+        visibleToasts={2}
+        toastOptions={{
+          titleStyle: {
+            fontFamily: Typography.fonts.cabin.semibold,
+            fontSize: Typography.sizes.xs,
+          },
+          descriptionStyle: {
+            fontFamily: Typography.fonts.dm.regular,
+            fontSize: Typography.sizes.xs,
+          },
+        }}
+      />
     </>
   );
 }
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView>
-      <AuthProvider>
-        <RootNavigator />
-        <Toaster
-          theme="light"
-          visibleToasts={2}
-          toastOptions={{
-            titleStyle: {
-              fontFamily: Typography.fonts.cabin.semibold,
-              fontSize: Typography.sizes.xs,
-            },
-            descriptionStyle: {
-              fontFamily: Typography.fonts.dm.regular,
-              fontSize: Typography.sizes.xs,
-            },
-          }}
-        />
-      </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

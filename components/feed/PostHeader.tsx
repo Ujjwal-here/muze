@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { formatDate } from "@/shared/utils/date";
 import { PostAvatar } from "./PostAvatar";
 import type { PostWithMeta } from "@/shared/types/post";
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function PostHeader({ post, replyLabel }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const displayName =
     post.author?.full_name || post.author?.username || "Unknown";
   const username = post.author?.username || "unknown";
@@ -50,7 +53,8 @@ export function PostHeader({ post, replyLabel }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -75,29 +79,29 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   username: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     flexShrink: 0,
   },
   dot: {
     fontFamily: Typography.fonts.dm.bold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
   },
   displayName: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.subtitle,
+    color: colors.subtitle,
     flexShrink: 1,
   },
   replyLabel: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     flex: 1,
     flexShrink: 1,
     lineHeight: Typography.sizes.xs * 1.35,
@@ -105,7 +109,7 @@ const styles = StyleSheet.create({
   date: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
+    color: colors.muted,
     flexShrink: 0,
   },
 });

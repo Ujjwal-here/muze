@@ -1,24 +1,25 @@
 import { Tabs } from "expo-router";
 import { Home, MessageCircle } from "lucide-react-native";
 
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   const unreadCount = useUnreadCount();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.muted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: Colors.white,
+          backgroundColor: colors.background,
           borderTopWidth: 1,
-          borderTopColor: Colors.border,
+          borderTopColor: colors.border,
           height: Layout.vertical["7xl"],
           paddingBottom: Layout.vertical.sm,
           paddingTop: Layout.vertical.sm,

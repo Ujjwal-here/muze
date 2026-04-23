@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Image, StyleSheet, ActivityIndicator } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { InlineReplyQuote } from "./InlineReplyQuote";
 import type { Message, ReplySnapshot } from "@/shared/types/chat";
 import { Layout } from "@/constants/layout";
+import { iw } from "@/shared/utils/responsive";
 
 type Props = {
   item: Message;
@@ -14,12 +16,12 @@ type Props = {
 };
 
 export function MessageBubble({ item, isMe, replyTo, showDelivered }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isImage = item.message_type === "image" && !!item.metadata?.url;
 
   return (
     <View style={[styles.stack, isMe && styles.stackMine]}>
-      {replyTo && <InlineReplyQuote reply={replyTo} isMe={isMe} />}
-
       {isImage ? (
         <View
           style={[
@@ -29,10 +31,12 @@ export function MessageBubble({ item, isMe, replyTo, showDelivered }: Props) {
                 ? styles.imageBubbleSent
                 : styles.imageBubbleSentNoCaption
               : styles.imageBubbleReceived,
-            replyTo && styles.bubbleWithReply,
           ]}
         >
-          <View style={styles.imageWrap}>
+          {replyTo && <InlineReplyQuote reply={replyTo} isMe={isMe} />}
+          <View
+            style={[styles.imageWrap, replyTo && styles.imageWrapWithReply]}
+          >
             <Image
               source={{ uri: item.metadata.url }}
               style={styles.image}
@@ -40,7 +44,7 @@ export function MessageBubble({ item, isMe, replyTo, showDelivered }: Props) {
             />
             {item.metadata?.uploading && (
               <View style={styles.imageOverlay}>
-                <ActivityIndicator color={Colors.white} />
+                <ActivityIndicator color={colors.white} />
               </View>
             )}
           </View>
@@ -56,21 +60,25 @@ export function MessageBubble({ item, isMe, replyTo, showDelivered }: Props) {
           ) : null}
         </View>
       ) : (
-        <View
-          style={[
-            styles.bubble,
-            isMe ? styles.bubbleSent : styles.bubbleReceived,
-            replyTo && styles.bubbleWithReply,
-          ]}
-        >
-          <Text
+        <View style={[styles.stack, isMe && styles.stackMine]}>
+          {replyTo && <InlineReplyQuote reply={replyTo} isMe={isMe} />}
+          <View
             style={[
-              styles.bubbleText,
-              isMe ? styles.bubbleTextSent : styles.bubbleTextReceived,
+              styles.bubble,
+              isMe ? styles.bubbleSent : styles.bubbleReceived,
+              replyTo && styles.bubbleWithReply,
+              replyTo && styles.bubbleWithReplyMinWidth,
             ]}
           >
-            {item.content}
-          </Text>
+            <Text
+              style={[
+                styles.bubbleText,
+                isMe ? styles.bubbleTextSent : styles.bubbleTextReceived,
+              ]}
+            >
+              {item.content}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -79,90 +87,98 @@ export function MessageBubble({ item, isMe, replyTo, showDelivered }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  stack: {
-    alignItems: "flex-start",
-  },
-  stackMine: {
-    alignItems: "flex-end",
-  },
-  bubble: {
-    paddingHorizontal: Layout.horizontal.sm,
-    paddingVertical: Layout.vertical.sm,
-    borderRadius: 10,
-  },
-  bubbleSent: {
-    backgroundColor: Colors.primary,
-  },
-  bubbleReceived: {
-    backgroundColor: Colors.surfaceSubtle,
-  },
-  bubbleText: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    lineHeight: Typography.sizes.xs * 1.4,
-  },
-  bubbleTextSent: {
-    color: Colors.white,
-  },
-  bubbleTextReceived: {
-    color: Colors.black,
-  },
-  bubbleWithReply: {
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  imageBubble: {
-    alignSelf: "flex-start",
-    borderRadius: 15,
-    overflow: "hidden",
-    padding: Layout.vertical.xs,
-    width: Layout.horizontal["10xl"] + Layout.horizontal["6xl"],
-    maxWidth: "100%",
-  },
-  imageBubbleSent: {
-    backgroundColor: Colors.primary,
-  },
-  imageBubbleSentNoCaption: {
-    backgroundColor: "transparent",
-  },
-  imageBubbleReceived: {
-    backgroundColor: Colors.surfaceSubtle,
-  },
-  imageWrap: {
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: Colors.white,
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.overlayLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  caption: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xs,
-    lineHeight: Typography.sizes.xs * 1.4,
-    paddingHorizontal: Layout.horizontal.xs,
-    paddingTop: Layout.vertical.xs,
-    paddingBottom: Layout.vertical.xs,
-  },
-  captionSent: {
-    color: Colors.white,
-  },
-  captionReceived: {
-    color: Colors.black,
-  },
-  delivered: {
-    fontFamily: Typography.fonts.dm.regular,
-    fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
-    alignSelf: "flex-end",
-    marginTop: Layout.vertical.xxs,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    stack: {
+      alignItems: "flex-start",
+    },
+    stackMine: {
+      alignItems: "flex-end",
+    },
+    bubble: {
+      paddingHorizontal: Layout.horizontal.sm,
+      paddingVertical: Layout.vertical.sm,
+      borderRadius: 10,
+    },
+    bubbleSent: {
+      backgroundColor: colors.primary,
+    },
+    bubbleReceived: {
+      backgroundColor: colors.bubbleReceived,
+    },
+    bubbleText: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      lineHeight: Typography.sizes.xs * 1.4,
+    },
+    bubbleTextSent: {
+      color: colors.bubbleSentText,
+    },
+    bubbleTextReceived: {
+      color: colors.bubbleReceivedText,
+    },
+    bubbleWithReply: {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
+    bubbleWithReplyMinWidth: {
+      minWidth: Layout.horizontal["10xl"] + Layout.horizontal.xl,
+      maxWidth: Layout.horizontal["10xl"] + Layout.horizontal.xl,
+    },
+    imageBubble: {
+      borderRadius: 15,
+      padding: Layout.vertical.xs,
+      width: Layout.horizontal["10xl"] + Layout.horizontal.lg,
+      maxWidth: "100%",
+      overflow: "hidden",
+    },
+    imageBubbleSent: {
+      backgroundColor: colors.primary,
+    },
+    imageBubbleSentNoCaption: {
+      backgroundColor: "transparent",
+    },
+    imageBubbleReceived: {
+      backgroundColor: colors.bubbleReceived,
+    },
+    imageWrap: {
+      borderRadius: 10,
+      overflow: "hidden",
+    },
+    imageWrapWithReply: {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+    },
+    image: {
+      width: "100%",
+      aspectRatio: 1,
+      backgroundColor: colors.white,
+    },
+    imageOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.overlayLight,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    caption: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xs,
+      lineHeight: Typography.sizes.xs * 1.4,
+      paddingHorizontal: Layout.horizontal.xs,
+      paddingTop: Layout.vertical.xs,
+      paddingBottom: Layout.vertical.xs,
+    },
+    captionSent: {
+      color: colors.bubbleSentText,
+    },
+    captionReceived: {
+      color: colors.bubbleReceivedText,
+    },
+    delivered: {
+      fontFamily: Typography.fonts.dm.regular,
+      fontSize: Typography.sizes.xxs,
+      color: colors.muted,
+      alignSelf: "flex-end",
+      marginTop: Layout.vertical.xxs,
+    },
+  });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   TextStyle,
 } from "react-native";
 import { router } from "expo-router";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { parseMentions } from "@/shared/utils/mentions";
@@ -27,6 +28,8 @@ export function ExpandableMentionText({
   style,
   mentionStyle,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [truncatedText, setTruncatedText] = useState("");
@@ -107,7 +110,8 @@ export function ExpandableMentionText({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   hiddenText: {
     position: "absolute",
     opacity: 0,
@@ -115,12 +119,12 @@ const styles = StyleSheet.create({
   more: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
   },
   toggle: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     marginBottom: Layout.vertical.xs,
   },
 });

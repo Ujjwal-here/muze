@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { PostAvatar } from "@/components/feed/PostAvatar";
@@ -16,6 +17,8 @@ type Props = {
 };
 
 export function QuotePreviewCard({ post }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const author = post.author;
   const displayName = author?.full_name || author?.username || "Unknown";
   const username = author?.username || "unknown";
@@ -54,13 +57,14 @@ export function QuotePreviewCard({ post }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 10,
     padding: Layout.horizontal.sm,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   header: {
     flexDirection: "row",
@@ -76,29 +80,29 @@ const styles = StyleSheet.create({
   username: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     flexShrink: 1,
   },
   dot: {
-    color: Colors.muted,
+    color: colors.muted,
     fontSize: Typography.sizes.xs,
   },
   displayName: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     flexShrink: 1,
   },
   date: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xxs,
-    color: Colors.muted,
+    color: colors.muted,
     marginLeft: Layout.horizontal.xxs,
   },
   content: {
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
     lineHeight: Typography.sizes.xs * 1.5,
     marginTop: Layout.vertical.xs,
   },

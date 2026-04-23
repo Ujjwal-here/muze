@@ -1,15 +1,11 @@
 import type { Profile } from "./chat";
 
-export type ReactionType = "like";
-
-export type PostType = "original" | "repost" | "quote";
-
 export interface Post {
   id: string;
   user_id: string;
   content: string | null;
   media_urls: string[] | null;
-  post_type: PostType;
+  post_type: "original" | "repost" | "quote";
   original_post_id: string | null;
   quote_content: string | null;
   parent_post_id: string | null;
@@ -22,17 +18,10 @@ export interface Post {
   updated_at: string;
 }
 
-export interface PostReaction {
-  id: string;
-  post_id: string;
-  user_id: string;
-  reaction_type: ReactionType;
-  created_at: string;
-}
-
 export interface PostWithMeta extends Post {
   author: Profile;
   is_liked: boolean;
+  is_disliked: boolean;
   is_reposted: boolean;
   original_post?: PostWithMeta | null;
   replies?: PostWithMeta[];

@@ -13,15 +13,12 @@ export async function fetchInbox(userId: string): Promise<InboxItem[]> {
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
 
-  let items: InboxItem[];
-  if (error) {
-    items = await fetchInboxManual(userId);
-  } else {
-    items = (data as InboxItem[]) ?? [];
-  }
+  const raw = error
+    ? await fetchInboxManual(userId)
+    : ((data as InboxItem[]) ?? []);
 
   const seen = new Set<string>();
-  items = items.filter((item) => {
+  const items = raw.filter((item) => {
     if (seen.has(item.conversation_id)) return false;
     seen.add(item.conversation_id);
     return true;
@@ -124,15 +121,10 @@ async function fetchInboxManual(userId: string): Promise<InboxItem[]> {
 
     if (profile) {
       const lastRead = lastReadMap[convo.id] ?? null;
-
-      let has_unread = false;
-      if (lastMsg && lastMsg.sender_id !== userId) {
-        if (!lastRead) {
-          has_unread = true;
-        } else {
-          has_unread = new Date(lastMsg.created_at) > new Date(lastRead);
-        }
-      }
+      const has_unread =
+        !!lastMsg &&
+        lastMsg.sender_id !== userId &&
+        (!lastRead || new Date(lastMsg.created_at) > new Date(lastRead));
 
       inboxItems.push({
         conversation_id: convo.id,

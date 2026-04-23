@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import {
 import { iw } from "@/shared/utils/responsive";
 import { Layout } from "@/constants/layout";
 import { Typography } from "@/constants/typography";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import type { PostWithMeta } from "@/shared/types/post";
 
 type Props = {
@@ -49,6 +50,8 @@ function PillIcon({
   count: number;
   onPress?: (e: GestureResponderEvent) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       style={styles.item}
@@ -58,7 +61,7 @@ function PillIcon({
       }}
     >
       <View style={styles.iconBg}>
-        <Icon size={ICON_SIZE} color={Colors.muted} strokeWidth={STROKE} />
+        <Icon size={ICON_SIZE} color={colors.muted} strokeWidth={STROKE} />
       </View>
       {count > 0 && <Text style={styles.count}>{count}</Text>}
     </Pressable>
@@ -77,6 +80,8 @@ export function PostActions({
   onMenuOpen,
   onRepostPress,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const groupActive = liked || disliked;
 
   return (
@@ -99,8 +104,8 @@ export function PostActions({
           >
             <ThumbsUp
               size={ICON_SIZE}
-              color={liked ? Colors.primary : Colors.muted}
-              fill={liked ? Colors.primary : "transparent"}
+              color={liked ? colors.primary : colors.muted}
+              fill={liked ? colors.primary : "transparent"}
               strokeWidth={STROKE}
             />
             {likesCount > 0 && (
@@ -120,8 +125,8 @@ export function PostActions({
           >
             <ThumbsDown
               size={ICON_SIZE}
-              color={disliked ? Colors.primary : Colors.muted}
-              fill={disliked ? Colors.primary : "transparent"}
+              color={disliked ? colors.primary : colors.muted}
+              fill={disliked ? colors.primary : "transparent"}
               strokeWidth={STROKE}
             />
           </Pressable>
@@ -137,12 +142,10 @@ export function PostActions({
           onRepostPress();
         }}
       >
-        <View
-          style={[styles.iconWithCount, reposted && styles.iconWithCountActive]}
-        >
+        <View style={styles.iconBg}>
           <Repeat
             size={ICON_SIZE}
-            color={reposted ? Colors.primary : Colors.muted}
+            color={reposted ? colors.primary : colors.muted}
             strokeWidth={STROKE}
           />
           {repostsCount > 0 && (
@@ -156,7 +159,7 @@ export function PostActions({
       <View style={styles.spacer} />
 
       <View style={styles.item}>
-        <Eye size={ICON_SIZE} color={Colors.muted} strokeWidth={STROKE} />
+        <Eye size={ICON_SIZE} color={colors.muted} strokeWidth={STROKE} />
         {post.views_count > 0 && (
           <Text style={styles.count}>{post.views_count}</Text>
         )}
@@ -172,7 +175,7 @@ export function PostActions({
       >
         <MoreVertical
           size={MENU_ICON_SIZE}
-          color={Colors.muted}
+          color={colors.muted}
           strokeWidth={STROKE}
         />
       </Pressable>
@@ -180,71 +183,73 @@ export function PostActions({
   );
 }
 
-const styles = StyleSheet.create({
-  actions: {
-    marginTop: Layout.vertical.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xxs,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Layout.horizontal.xxs,
-  },
-  iconBg: {
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 20,
-    paddingVertical: Layout.vertical.xs,
-    paddingHorizontal: Layout.horizontal.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconWithCount: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 20,
-    paddingVertical: Layout.vertical.xs,
-    paddingHorizontal: Layout.horizontal.sm,
-    gap: Layout.horizontal.xxs,
-  },
-  iconWithCountActive: {
-    backgroundColor: Colors.primaryTintStrong,
-  },
-  inlineCount: {
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  likeDislikeGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 20,
-    overflow: "hidden",
-    paddingVertical: Layout.vertical.xs,
-    paddingHorizontal: Layout.horizontal.sm,
-    gap: Layout.horizontal.xs,
-  },
-  likeDislikeGroupActive: {
-    backgroundColor: Colors.primaryTintStrong,
-  },
-  likeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  divider: {
-    width: 2,
-    height: Layout.vertical.smMd,
-    backgroundColor: Colors.muted,
-  },
-  count: {
-    marginLeft: Layout.horizontal.xxs,
-    fontFamily: Typography.fonts.dm.medium,
-    fontSize: Typography.sizes.xs,
-    color: Colors.muted,
-  },
-  countActive: { color: Colors.primary },
-  spacer: { flex: 1 },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    actions: {
+      marginTop: Layout.vertical.md,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Layout.horizontal.xxs,
+    },
+    item: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Layout.horizontal.xxs,
+    },
+    iconBg: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Layout.horizontal.xxs,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: 20,
+      paddingVertical: Layout.vertical.xs,
+      paddingHorizontal: Layout.horizontal.sm,
+    },
+    iconWithCount: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: 20,
+      paddingVertical: Layout.vertical.xs,
+      paddingHorizontal: Layout.horizontal.sm,
+      gap: Layout.horizontal.xxs,
+    },
+    iconWithCountActive: {
+      backgroundColor: colors.actionActiveBg,
+    },
+    inlineCount: {
+      fontFamily: Typography.fonts.dm.medium,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    likeDislikeGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.actionBg,
+      borderRadius: 20,
+      overflow: "hidden",
+      paddingVertical: Layout.vertical.xs,
+      paddingHorizontal: Layout.horizontal.sm,
+      gap: Layout.horizontal.xs,
+    },
+    likeDislikeGroupActive: {
+      backgroundColor: colors.actionActiveBg,
+    },
+    likeBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    divider: {
+      width: 1,
+      height: Layout.vertical.smMd,
+      backgroundColor: colors.actionDivider,
+    },
+    count: {
+      marginLeft: Layout.horizontal.xxs,
+      fontFamily: Typography.fonts.dm.medium,
+      fontSize: Typography.sizes.xs,
+      color: colors.muted,
+    },
+    countActive: { color: colors.primary },
+    spacer: { flex: 1 },
+  });

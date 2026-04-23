@@ -26,9 +26,8 @@ export function shouldShowDateSeparator(
   return gapMs > 30 * 60 * 1000;
 }
 
-// Reconcile an incoming real message with any matching optimistic temp row.
-// Matches on sender + same message_type + same content/url + created within
-// a 60-second window of the optimistic timestamp.
+// Replaces a matching optimistic temp row with the real incoming message.
+// Matches on sender + type + content/url within a 60s window.
 export function reconcile(prev: Message[], incoming: Message): Message[] {
   if (prev.some((m) => m.id === incoming.id)) return prev;
 

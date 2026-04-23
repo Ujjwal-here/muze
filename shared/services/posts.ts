@@ -14,8 +14,8 @@ const POST_SELECT = `
   author:profiles!user_id (
     id, username, full_name, avatar_url
   ),
-  is_liked:post_reactions!left (
-    id, user_id
+  reactions:post_reactions!left (
+    id, user_id, reaction_type
   )
 `;
 
@@ -31,12 +31,19 @@ const viewedPostIds = new Set<string>();
 function normalise(raw: any, userId?: string): PostWithMeta {
   if (!raw) return raw;
 
-  const reactions = Array.isArray(raw.is_liked) ? raw.is_liked : [];
+  const reactions = Array.isArray(raw.reactions) ? raw.reactions : [];
   const isLiked = userId
-    ? reactions.some((r: any) => r.user_id === userId)
-    : reactions.length > 0;
+    ? reactions.some(
+        (r: any) => r.user_id === userId && r.reaction_type === "like",
+      )
+    : reactions.some((r: any) => r.reaction_type === "like");
+  const isDisliked = userId
+    ? reactions.some(
+        (r: any) => r.user_id === userId && r.reaction_type === "dislike",
+      )
+    : reactions.some((r: any) => r.reaction_type === "dislike");
 
-  // Supabase returns to-one joins as arrays — unwrap safely
+  // Supabase returns to-one joins as arrays — unwrap.
   const author = Array.isArray(raw.author)
     ? (raw.author[0] ?? null)
     : (raw.author ?? null);
@@ -51,12 +58,13 @@ function normalise(raw: any, userId?: string): PostWithMeta {
     ...raw,
     author,
     is_liked: isLiked,
+    is_disliked: isDisliked,
     is_reposted: false,
     original_post: original,
   };
 }
 
-// Fetch original posts separately and merge — avoids self-join FK ambiguity
+// Fetch originals separately to avoid self-join FK ambiguity.
 async function enrichWithOriginalPosts(
   posts: PostWithMeta[],
 ): Promise<PostWithMeta[]> {
@@ -71,7 +79,7 @@ async function enrichWithOriginalPosts(
     .select(ORIGINAL_POST_SELECT)
     .in("id", ids);
 
-  if (!data || !data.length) return posts;
+  if (!data?.length) return posts;
 
   const originalMap = new Map<string, PostWithMeta>();
   for (const row of data) {
@@ -79,15 +87,11 @@ async function enrichWithOriginalPosts(
     originalMap.set(norm.id, norm);
   }
 
-  return posts.map((p) => {
-    if (p.original_post_id && !p.original_post) {
-      return {
-        ...p,
-        original_post: originalMap.get(p.original_post_id) ?? null,
-      };
-    }
-    return p;
-  });
+  return posts.map((p) =>
+    p.original_post_id && !p.original_post
+      ? { ...p, original_post: originalMap.get(p.original_post_id) ?? null }
+      : p,
+  );
 }
 
 async function enrichWithRepostStatus(
@@ -125,10 +129,12 @@ export async function fetchFeed(
   }
 
   if (feed_type === "following") {
-    const { data: followed } = await supabase
+    const { data: followed, error: followsError } = await supabase
       .from("follows")
       .select("followed_id")
       .eq("follower_id", userId);
+
+    if (followsError) throw followsError;
 
     const ids = [userId, ...(followed ?? []).map((f) => f.followed_id)];
     query = query.in("user_id", ids);
@@ -183,7 +189,7 @@ export async function fetchPost(
 
   if (!viewedPostIds.has(postId)) {
     viewedPostIds.add(postId);
-    supabase.rpc("increment_view", { p_post_id: postId }).then(() => {});
+    void supabase.rpc("increment_view", { p_post_id: postId });
   }
 
   const [enriched] = await enrichWithRepostStatus([withOriginal], userId);
@@ -268,16 +274,26 @@ export async function toggleLike(
   return { liked: liked as boolean, likes_count: post?.likes_count ?? 0 };
 }
 
-export async function repost(
-  payload: RepostPayload,
-): Promise<{ id: string; already_reposted: boolean }> {
+export async function toggleDislike(
+  postId: string,
+): Promise<{ disliked: boolean }> {
+  const { data: disliked, error } = await supabase.rpc("toggle_dislike", {
+    p_post_id: postId,
+  });
+
+  if (error) throw error;
+
+  return { disliked: disliked as boolean };
+}
+
+export async function repost(payload: RepostPayload): Promise<{ id: string }> {
   const { data: id, error } = await supabase.rpc("repost", {
     p_original_post_id: payload.original_post_id,
   });
 
   if (error) throw error;
 
-  return { id: id as string, already_reposted: false };
+  return { id: id as string };
 }
 
 export async function undoRepost(originalPostId: string): Promise<boolean> {

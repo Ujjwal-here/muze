@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { Layout } from "@/constants/layout";
 import { iw } from "@/shared/utils/responsive";
@@ -26,6 +27,8 @@ export function PostFooter({
   onPickImage,
   onPost,
 }: PostFooterProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.footer}>
       <Text style={[styles.charCount, isOverLimit && styles.charCountOver]}>
@@ -34,7 +37,7 @@ export function PostFooter({
 
       <View style={styles.toolbarRow}>
         <Pressable style={styles.toolBtn} onPress={onPickImage}>
-          <Ionicons name="image-outline" size={iw(20)} color={Colors.muted} />
+          <Ionicons name="image-outline" size={iw(20)} color={colors.muted} />
         </Pressable>
       </View>
 
@@ -49,7 +52,8 @@ export function PostFooter({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   footer: {
     paddingHorizontal: Layout.horizontal.lg,
     paddingTop: Layout.vertical.sm,
@@ -59,11 +63,11 @@ const styles = StyleSheet.create({
   charCount: {
     fontFamily: Typography.fonts.dm.medium,
     fontSize: Typography.sizes.xs,
-    color: Colors.muted,
+    color: colors.muted,
     textAlign: "center",
   },
   charCountOver: {
-    color: "#E53935",
+    color: colors.danger,
   },
   toolbarRow: {
     flexDirection: "row",
@@ -77,6 +81,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.surfaceMuted,
   },
 });

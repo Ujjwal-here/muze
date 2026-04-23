@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -22,7 +23,8 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { Colors } from "@/constants/colors";
+import { useTheme } from "@/context/theme";
+import type { ThemeColors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
 import { iw } from "@/shared/utils/responsive";
 import { searchProfiles } from "@/shared/services/chat";
@@ -86,6 +88,8 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(
     },
     ref,
   ) {
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
     const inputRef = useRef<TextInput>(null);
     const [selection, setSelection] = useState({ start: 0, end: 0 });
     const [suggestions, setSuggestions] = useState<Profile[]>([]);
@@ -122,7 +126,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(
       }, 180);
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (mention) {
         runSearch(mention.query);
       } else {
@@ -170,7 +174,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(
       >
         {loading && suggestions.length === 0 ? (
           <View style={styles.suggestionLoading}>
-            <ActivityIndicator size="small" color={Colors.muted} />
+            <ActivityIndicator size="small" color={colors.muted} />
           </View>
         ) : (
           <ScrollView
@@ -234,12 +238,13 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(
   },
 );
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: {
     position: "relative",
   },
   suggestionsBox: {
-    backgroundColor: Colors.surfaceMuted,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingVertical: Layout.vertical.sm,
     paddingHorizontal: Layout.horizontal.sm,
@@ -273,23 +278,23 @@ const styles = StyleSheet.create({
     width: iw(28),
     height: iw(28),
     borderRadius: 999,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   suggestionAvatarFallback: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.avatarFallback,
+    backgroundColor: colors.avatarFallback,
   },
   suggestionAvatarInitial: {
     fontFamily: Typography.fonts.dm.semibold,
     fontSize: Typography.sizes.xs,
-    color: Colors.label,
+    color: colors.label,
   },
   suggestionUsername: {
     flex: 1,
     minWidth: 0,
     fontFamily: Typography.fonts.dm.regular,
     fontSize: Typography.sizes.xs,
-    color: Colors.black,
+    color: colors.black,
   },
 });
